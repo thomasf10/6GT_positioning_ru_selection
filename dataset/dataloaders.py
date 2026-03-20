@@ -4,6 +4,7 @@ import torch
 from torch.utils.data import Dataset
 import os
 import re
+import pandas as pd
 
 invalid_ue_ideces = [761]
 
@@ -11,10 +12,11 @@ invalid_ue_ideces = [761]
 # todo add option to make a dataset with only the points under the RUs as a training set
 # use: on_grid_users = ds.where(ds['ue_on_stripe_grid'], drop=True) (see commented code below)
 class CsiPositionDataset(Dataset):
-    def __init__(self, subthz_path, sub10_path, labels_path, mode):
+    def __init__(self, subthz_path, sub10_path, labels_path, mode, on_grid_only=False):
         self.subthz_path = subthz_path
         self.sub10_path = sub10_path
         self.labels_path = labels_path
+        self.on_grid_only = on_grid_only #only keep users that are on the stripe grid (i.e. under the RUs)
 
         modes = ['sub10', 'subTHz', 'combined', 'pilot', 'sub10_pilot'] #todo pilot modes currently not implemented
         if mode not in modes:
@@ -55,6 +57,21 @@ class CsiPositionDataset(Dataset):
         else:
             self.valid_users = sorted(list(sub10_users))
 
+        # Filter for on-grid users if requested
+        if self.on_grid_only:
+            # Load UE locations dataset
+            ue_locations_path = os.path.join(os.path.dirname(sub10_path), "ue_locations", "ue_locations.nc")
+            if os.path.exists(ue_locations_path):
+                ue_ds = xr.load_dataset(ue_locations_path)
+                # Get users that are on the stripe grid
+                on_grid_users = ue_ds.where(ue_ds['ue_on_stripe_grid'], drop=True)
+                on_grid_user_ids = set(on_grid_users['user_id'].values)
+                # Filter valid_users to only include on-grid users
+                self.valid_users = [uid for uid in self.valid_users if uid in on_grid_user_ids]
+                print(f"Filtered to {len(self.valid_users)} on-grid users.")
+            else:
+                print(f"Warning: UE locations file not found at {ue_locations_path}. Skipping on-grid filtering.")
+
         print(f"Found {len(self.valid_users)} valid users.")
 
         print(f'-------------------------------------------------------------------- \nCsiDataset expected output shapes: \n'
@@ -70,47 +87,55 @@ class CsiPositionDataset(Dataset):
 
     def __getitem__(self, idx):
         user_id = self.valid_users[idx]
+        
+        # Initialize data containers
+        sub_10_channel = None
+        sub_thz_channel = None
+        position_label = None
+        
         if self.mode == 'subTHz' or self.mode == 'combined':
             """ load sub THz CSI """
             subthz_dir = os.path.join(self.subthz_path, f"channels_thz_ue_{user_id}.nc")
-
             ds = xr.load_dataset(subthz_dir)
-
+            
             # get subthz CSI of user
-            sub_thz_channel = ds['channel'].values #shape: (bs, nr_RUs, ue_ant, ru_ant, subcarrier)
-
+            sub_thz_channel = ds['channel'].values
+            
             # get position label
             x_label = ds.attrs['user_x']
             y_label = ds.attrs['user_y']
-            z_label = ds.attrs['user_z'] # should be fixed
-            position_label = np.array([x_label, y_label, z_label], dtype=np.float32) #shape: {bs, 3)
-
-            if self.mode == 'subTHz':
-                return sub_thz_channel, position_label, user_id
+            z_label = ds.attrs['user_z']
+            position_label = np.array([x_label, y_label, z_label], dtype=np.float32)
 
         if self.mode == 'sub10' or self.mode == 'combined':
             """ load sub 10 CSI """
             sub10_dir = os.path.join(self.sub10_path, f"channels_sub10ghz_ue_{user_id}.nc")
-
             ds_sub10 = xr.load_dataset(sub10_dir)
-            #print(ds_sub10)
+            
+            sub_10_channel = ds_sub10["channel"].values
+            
+            # get position label (use sub10 dataset if not already set)
+            if position_label is None:
+                x_label = ds_sub10.attrs['user_x']
+                y_label = ds_sub10.attrs['user_y']
+                z_label = ds_sub10.attrs['user_z']
+                position_label = np.array([x_label, y_label, z_label], dtype=np.float32)
 
-            sub_10_channel = ds_sub10["channel"].values #shape: (bs, nr_aps, ue_ant, ru_ant, subcarrier)
-
-            # get position label
-            x_label = ds.attrs['user_x']
-            y_label = ds.attrs['user_y']
-            z_label = ds.attrs['user_z'] # should be fixed
-            position_label = np.array([x_label, y_label, z_label], dtype=np.float32) #shape: {bs, 3)
-
-            if self.mode == 'sub10':
-                return sub_10_channel, position_label, user_id
-
-        if self.mode == 'combined':
-            return sub_10_channel, sub_thz_channel, position_label, user_id
+        # Always return the same structure: (data_dict, label, user_id)
+        data = {
+            'sub10_channel': sub_10_channel,
+            'subthz_channel': sub_thz_channel
+        }
+        
+        return data, position_label, user_id
 
 """ Dataset for RU selection """
 class CsiDataset(Dataset):
+    # Define beam angles and create angle-to-id mapping
+    BEAM_ANGLES = [-30, -20, -10, 0, 10, 20, 30]
+    ANGLE_TO_ID = {angle: idx for idx, angle in enumerate(BEAM_ANGLES)}
+    ID_TO_ANGLE = {idx: angle for angle, idx in ANGLE_TO_ID.items()}
+    
     def __init__(self, subthz_path, sub10_path, labels_path, mode):
         self.subthz_path = subthz_path
         self.sub10_path = sub10_path
@@ -123,8 +148,38 @@ class CsiDataset(Dataset):
             )
         self.mode = mode
 
-        # todo get labels
-        # todo load them from new dataframe that needs to be made
+        # Load labels from CSV
+        self.labels_df = pd.read_csv(labels_path)
+
+        # Use fixed grid for global RU IDs: 8 stripes x 20 RUs per stripe => 160 values
+        self.num_stripes = 8
+        self.num_rus_per_stripe = 20
+        self.num_ru_ids = self.num_stripes * self.num_rus_per_stripe
+        print(f"Using fixed global RU ID space: {self.num_ru_ids} (8 stripes x 20 RUs)")
+
+        # Create a mapping from ue_id to labels
+        self.labels_dict = {}
+        for _, row in self.labels_df.iterrows():
+            ue_id = int(row['ue_id'])
+            # Convert beam angles to beam IDs
+            ue_beam_angle = int(row['ue_beam_id'])
+            ru_beam_angle = int(row['ru_beam_id'])
+            ue_beam_id = self.angle_to_beam_id(ue_beam_angle)
+            ru_beam_id = self.angle_to_beam_id(ru_beam_angle)
+            
+            stripe_id = int(row['stripe_id'])
+            ru_id = int(row['ru_id'])
+            if not (0 <= stripe_id < self.num_stripes and 0 <= ru_id < self.num_rus_per_stripe):
+                raise ValueError(f"Invalid stripe_id/ru_id pair: ({stripe_id}, {ru_id})")
+            global_ru_id = stripe_id * self.num_rus_per_stripe + ru_id
+            
+            self.labels_dict[ue_id] = {
+                'stripe_id': stripe_id,
+                'ru_id': ru_id,
+                'global_ru_id': global_ru_id,
+                'ue_beam_id': ue_beam_id,
+                'ru_beam_id': ru_beam_id
+            }
 
         # Build list of valid user_ids
         sub10_users = set()
@@ -169,35 +224,69 @@ class CsiDataset(Dataset):
     def __len__(self):
         return len(self.valid_users)
 
+    @staticmethod
+    def angle_to_beam_id(angle):
+        """Convert beam angle to beam ID.
+        
+        Args:
+            angle: Beam angle in degrees [-30, -10, 0, 10, 30]
+            
+        Returns:
+            Beam ID [0, 1, 2, 3, 4]
+        """
+        return CsiDataset.ANGLE_TO_ID[angle]
+    
+    @staticmethod
+    def beam_id_to_angle(beam_id):
+        """Convert beam ID to beam angle.
+        
+        Args:
+            beam_id: Beam ID [0, 1, 2, 3, 4]
+            
+        Returns:
+            Beam angle in degrees [-30, -10, 0, 10, 30]
+        """
+        return CsiDataset.ID_TO_ANGLE[beam_id]
+
     def __getitem__(self, idx):
         user_id = self.valid_users[idx]
+        # Get label for this user
+        label = self.labels_dict.get(user_id, None)
+        
+        # Initialize data containers
+        sub_10_channel = None
+        sub_thz_channel = None
+        
         if self.mode == 'subTHz' or self.mode == 'combined':
             """ load sub THz CSI """
             subthz_dir = os.path.join(self.subthz_path, f"channels_thz_ue_{user_id}.nc")
-
             ds = xr.load_dataset(subthz_dir)
-            #print(ds)
-
-            # get subthz CSI of user
-            sub_thz_channel = ds['channel'].values #shape: (bs, nr_RUs, ue_ant, ru_ant, subcarrier)
-
-            if self.mode == 'subTHz':
-                return sub_thz_channel, user_id
+            sub_thz_channel = ds['channel'].values
 
         if self.mode == 'sub10' or self.mode == 'combined':
             """ load sub 10 CSI """
             sub10_dir = os.path.join(self.sub10_path, f"channels_sub10ghz_ue_{user_id}.nc")
-
             ds_sub10 = xr.load_dataset(sub10_dir)
-            #print(ds_sub10)
+            sub_10_channel = ds_sub10["channel"].values
 
-            sub_10_channel = ds_sub10["channel"].values #shape: (bs, nr_aps, ue_ant, ru_ant, subcarrier)
+        # Convert complex data (real+imag) to float tensors
+        def channel_to_float_array(channel):
+            if channel is None:
+                return np.zeros((0,), dtype=np.float32)
+            if np.iscomplexobj(channel):
+                # Convert complex to two channels (real, imag)
+                channel = np.stack([channel.real, channel.imag], axis=-1)
+            return channel.astype(np.float32)
 
-            if self.mode == 'sub10':
-                return sub_10_channel, user_id
+        sub_10_channel = channel_to_float_array(sub_10_channel)
+        sub_thz_channel = channel_to_float_array(sub_thz_channel)
 
-        if self.mode == 'combined':
-            return sub_10_channel, sub_thz_channel, user_id
+        data = {
+            'sub10_channel': torch.from_numpy(sub_10_channel).float(),
+            'subthz_channel': torch.from_numpy(sub_thz_channel).float()
+        }
+
+        return data, label, user_id
 
 
 

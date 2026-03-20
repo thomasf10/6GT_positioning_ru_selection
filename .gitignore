@@ -2,3 +2,15 @@
 \myenv
 \.idea
 .idea/
+
+# TensorBoard logs and model checkpoints
+runs/
+checkpoints/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
