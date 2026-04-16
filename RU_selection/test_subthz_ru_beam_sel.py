@@ -163,7 +163,8 @@ def main():
     nn_ue_beam_angles = [beam_angles[bid] for bid in all_ue_beam_preds]
     nn_ru_beam_angles = [beam_angles[bid] for bid in all_ru_beam_preds]
 
-    save_dir = ckpt_path.parent
+    save_dir = ckpt_path.parent / 'post_training_eval'
+    save_dir.mkdir(exist_ok=True)
     ru_x, ru_y = get_ru_positions(str(config_path))
 
     results_csv_path = f'../dataset/{dataset_folder}/ru_selection_labels/results.csv'
