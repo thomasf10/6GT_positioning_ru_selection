@@ -7,6 +7,7 @@ and plotting CDF curves. Import individual functions as needed:
     from evaluation import evaluate_nmse_cdf, compute_cdf, load_ue_pickle
 """
 import io
+import math
 import os
 import pickle
 
@@ -264,7 +265,8 @@ def evaluate_nmse_cdf(
         'ue_x': [],
         'ue_y': [],
     }
-    skipped = 0
+    skipped_gt = []   # UEs skipped because ground-truth data is missing
+    nn_invalid = []   # UEs where NN prediction has no matching pkl row (NN curve only)
 
     iter_items = zip(ue_ids, global_ru_id_labels, global_ru_id_predictions,
                      nn_ue_beam_angles if nn_has_beams else [None] * len(ue_ids),
@@ -278,7 +280,7 @@ def evaluate_nmse_cdf(
         # --- Optimal NMSE from results.csv ---
         opt_rows = results_df[results_df['ue_id'] == ue_id]
         if opt_rows.empty:
-            skipped += 1
+            skipped_gt.append((ue_id, 'no row in results.csv'))
             continue
         opt_nmse = float(opt_rows['nmse'].iloc[0])
         closest_stripe = int(opt_rows['cstripe_id'].iloc[0])
@@ -287,7 +289,7 @@ def evaluate_nmse_cdf(
         # --- Per-UE pickle ---
         pkl_df = load_ue_pickle(raw_data_path, ue_id)
         if pkl_df is None:
-            skipped += 1
+            skipped_gt.append((ue_id, 'pkl file missing'))
             continue
 
         pred_stripe = pred_global_ru // num_rus_per_stripe
@@ -338,20 +340,79 @@ def evaluate_nmse_cdf(
         # Best RU for fixed beams (min NMSE across all RUs at fixed beams)
         fixed_beam_all_rus = pkl_df[fixed_beam_mask]
 
-        if any(df.empty for df in [nn_rows, opt_fixed_rows, closest_fixed_rows, closest_all_beams, fixed_beam_all_rus]):
-            skipped += 1
+        # Only skip on ground-truth-related emptiness. A bad NN prediction
+        # must NOT cause the whole UE to be dropped, or the ground-truth
+        # curves become a function of the model's predictions.
+        empty_gt = []
+        if opt_fixed_rows.empty:
+            empty_gt.append(
+                f"optimal_fixed(stripe={label_stripe},ru={label_ru},"
+                f"ue_beam={ue_beam_angle},ru_beam={ru_beam_angle})"
+            )
+        if closest_fixed_rows.empty:
+            empty_gt.append(
+                f"closest_fixed(stripe={closest_stripe},ru={closest_ru},"
+                f"ue_beam={ue_beam_angle},ru_beam={ru_beam_angle})"
+            )
+        if closest_all_beams.empty:
+            empty_gt.append(
+                f"closest_all_beams(stripe={closest_stripe},ru={closest_ru},"
+                f"ue_beam=any,ru_beam=any)"
+            )
+        if fixed_beam_all_rus.empty:
+            empty_gt.append(
+                f"fixed_beam_all_rus(stripe=any,ru=any,"
+                f"ue_beam={ue_beam_angle},ru_beam={ru_beam_angle})"
+            )
+        if empty_gt:
+            skipped_gt.append((ue_id, '; '.join(empty_gt)))
             continue
+
+        if nn_rows.empty:
+            nn_nmse = float('nan')
+            nn_invalid.append(
+                (ue_id, pred_stripe, pred_ru,
+                 int(nn_ue_ba) if nn_ue_ba is not None else None,
+                 int(nn_ru_ba) if nn_ru_ba is not None else None)
+            )
+        else:
+            nn_nmse = float(nn_rows['nmse'].iloc[0])
 
         nmse['optimal'].append(opt_nmse)
         nmse['optimal_fixed'].append(float(opt_fixed_rows['nmse'].iloc[0]))
         nmse['best_ru_fixed'].append(float(fixed_beam_all_rus['nmse'].min()))
         nmse['closest_optimal'].append(float(closest_all_beams['nmse'].min()))
         nmse['closest_fixed'].append(float(closest_fixed_rows['nmse'].iloc[0]))
-        nmse['nn'].append(float(nn_rows['nmse'].iloc[0]))
+        nmse['nn'].append(nn_nmse)
         nmse['ue_x'].append(float(opt_rows['uex'].iloc[0]))
         nmse['ue_y'].append(float(opt_rows['uey'].iloc[0]))
 
-    print(f"Evaluated {len(nmse['optimal'])} UEs, skipped {skipped} (missing data)")
+    print(
+        f"Evaluated {len(nmse['optimal'])} UEs, "
+        f"skipped {len(skipped_gt)} (missing ground-truth), "
+        f"NN-invalid {len(nn_invalid)} (prediction not in pkl; NN curve only)"
+    )
+
+    # --- Write skipped-UE log alongside the plot ---
+    if save_path is not None:
+        log_path = os.path.splitext(save_path)[0] + '_skipped.txt'
+        try:
+            with open(log_path, 'w', encoding='utf-8') as f:
+                f.write(f"Total UEs evaluated: {len(ue_ids)}\n")
+                f.write(f"Plotted (ground truth + NN with NaN fill): {len(nmse['optimal'])}\n")
+                f.write(f"Skipped (missing ground-truth data): {len(skipped_gt)}\n")
+                f.write(f"NN-invalid (prediction not in pkl): {len(nn_invalid)}\n")
+                f.write("\n--- Skipped (missing ground-truth) ---\n")
+                f.write("ue_id | reason (empty lookup(s) with stripe/ru/beam coords)\n")
+                for ue_id, reason in skipped_gt:
+                    f.write(f"{ue_id} | {reason}\n")
+                f.write("\n--- NN-invalid predictions ---\n")
+                f.write("ue_id, pred_stripe, pred_ru, nn_ue_beam, nn_ru_beam\n")
+                for row in nn_invalid:
+                    f.write(", ".join(str(v) for v in row) + "\n")
+            print(f"Skipped-UE log saved to: {log_path}")
+        except OSError as e:
+            print(f"Warning: could not write skipped-UE log to {log_path}: {e}")
 
     if not nmse['optimal']:
         print("No valid samples to plot.")
@@ -369,7 +430,10 @@ def evaluate_nmse_cdf(
 
     fig, ax = plt.subplots(figsize=(8, 5))
     for key, label, linestyle, _color in curves:
-        sorted_v, cdf = compute_cdf(nmse[key])
+        values = nmse[key]
+        if key == 'nn':
+            values = [v for v in values if not math.isnan(v)]
+        sorted_v, cdf = compute_cdf(values)
         ax.plot(sorted_v, cdf, label=label, linewidth=2, linestyle=linestyle)
 
     ax.set_xlabel('NMSE (dB)')
