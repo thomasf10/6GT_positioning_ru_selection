@@ -399,7 +399,7 @@ def main():
     # Conv3D hyperparameters
     conv3d_channels = 32
     conv3d_layers = 3
-    conv3d_fc_size = 512
+    conv3d_fc_size = 256
     conv3d_dropout = 0.3
 
     

@@ -136,7 +136,7 @@ class CsiDataset(Dataset):
     ANGLE_TO_ID = {angle: idx for idx, angle in enumerate(BEAM_ANGLES)}
     ID_TO_ANGLE = {idx: angle for angle, idx in ANGLE_TO_ID.items()}
     
-    def __init__(self, subthz_path, sub10_path, labels_path, mode):
+    def __init__(self, subthz_path, sub10_path, labels_path, mode, num_stripes=8, num_rus_per_stripe=20):
         self.subthz_path = subthz_path
         self.sub10_path = sub10_path
         self.labels_path = labels_path
@@ -151,11 +151,11 @@ class CsiDataset(Dataset):
         # Load labels from CSV
         self.labels_df = pd.read_csv(labels_path)
 
-        # Use fixed grid for global RU IDs: 8 stripes x 20 RUs per stripe => 160 values
-        self.num_stripes = 8
-        self.num_rus_per_stripe = 20
+        # Use configurable grid for global RU IDs
+        self.num_stripes = num_stripes
+        self.num_rus_per_stripe = num_rus_per_stripe
         self.num_ru_ids = self.num_stripes * self.num_rus_per_stripe
-        print(f"Using fixed global RU ID space: {self.num_ru_ids} (8 stripes x 20 RUs)")
+        print(f"Using global RU ID space: {self.num_ru_ids} ({num_stripes} stripes x {num_rus_per_stripe} RUs)")
 
         # Create a mapping from ue_id to labels
         self.labels_dict = {}
@@ -284,6 +284,110 @@ class CsiDataset(Dataset):
         data = {
             'sub10_channel': torch.from_numpy(sub_10_channel).float(),
             'subthz_channel': torch.from_numpy(sub_thz_channel).float()
+        }
+
+        return data, label, user_id
+
+
+class PDP32Dataset(Dataset):
+    # Keep the same RU/beam conventions as CsiDataset for compatibility.
+    BEAM_ANGLES = [-30, -20, -10, 0, 10, 20, 30]
+    ANGLE_TO_ID = {angle: idx for idx, angle in enumerate(BEAM_ANGLES)}
+    ID_TO_ANGLE = {idx: angle for angle, idx in ANGLE_TO_ID.items()}
+
+    def __init__(self, sub10_pdp_path, labels_path, mode='sub10'):
+        self.sub10_pdp_path = sub10_pdp_path
+        self.labels_path = labels_path
+
+        if mode != 'sub10':
+            raise ValueError("PDP32Dataset currently only supports mode='sub10'.")
+        self.mode = mode
+
+        # Load labels from CSV (same mapping strategy as CsiDataset)
+        self.labels_df = pd.read_csv(labels_path)
+
+        # Use fixed grid for global RU IDs: 8 stripes x 20 RUs per stripe => 160 values
+        self.num_stripes = 8
+        self.num_rus_per_stripe = 20
+        self.num_ru_ids = self.num_stripes * self.num_rus_per_stripe
+        print(f"Using fixed global RU ID space: {self.num_ru_ids} (8 stripes x 20 RUs)")
+
+        self.labels_dict = {}
+        for _, row in self.labels_df.iterrows():
+            ue_id = int(row['ue_id'])
+            ue_beam_angle = int(row['ue_beam_id'])
+            ru_beam_angle = int(row['ru_beam_id'])
+            ue_beam_id = self.angle_to_beam_id(ue_beam_angle)
+            ru_beam_id = self.angle_to_beam_id(ru_beam_angle)
+
+            stripe_id = int(row['stripe_id'])
+            ru_id = int(row['ru_id'])
+            if not (0 <= stripe_id < self.num_stripes and 0 <= ru_id < self.num_rus_per_stripe):
+                raise ValueError(f"Invalid stripe_id/ru_id pair: ({stripe_id}, {ru_id})")
+            global_ru_id = stripe_id * self.num_rus_per_stripe + ru_id
+
+            self.labels_dict[ue_id] = {
+                'stripe_id': stripe_id,
+                'ru_id': ru_id,
+                'global_ru_id': global_ru_id,
+                'ue_beam_id': ue_beam_id,
+                'ru_beam_id': ru_beam_id,
+            }
+
+        # Build list of valid user_ids from PDP folder
+        sub10_users = set()
+        if os.path.exists(sub10_pdp_path):
+            for f in os.listdir(sub10_pdp_path):
+                match = re.search(r'ue_(\d+)', f)
+                if match:
+                    sub10_users.add(int(match.group(1)))
+
+        self.valid_users = sorted(list(sub10_users))
+        print(f"Found {len(self.valid_users)} valid users.")
+
+        print(
+            '-------------------------------------------------------------------- \n'
+            'PDP32Dataset expected output shapes: \n'
+            'sub10 mode: (batch_size, nr_APs, ue_ants, ru_ants, 32_taps) \n'
+            '--------------------------------------------------------------------'
+        )
+
+    def __len__(self):
+        return len(self.valid_users)
+
+    @staticmethod
+    def angle_to_beam_id(angle):
+        return PDP32Dataset.ANGLE_TO_ID[angle]
+
+    @staticmethod
+    def beam_id_to_angle(beam_id):
+        return PDP32Dataset.ID_TO_ANGLE[beam_id]
+
+    def __getitem__(self, idx):
+        user_id = self.valid_users[idx]
+        label = self.labels_dict.get(user_id, None)
+
+        pdp_file = os.path.join(self.sub10_pdp_path, f"channels_sub10ghz_ue_{user_id}.nc")
+        ds_pdp = xr.load_dataset(pdp_file)
+
+        # Converter stores variable name 'pdp'. Keep fallback for compatibility.
+        if 'pdp' in ds_pdp.data_vars:
+            pdp_sub10 = ds_pdp['pdp'].values
+        elif 'channel' in ds_pdp.data_vars:
+            pdp_sub10 = ds_pdp['channel'].values
+        else:
+            raise KeyError(
+                f"Expected variable 'pdp' (or fallback 'channel') in {pdp_file}, "
+                f"found {list(ds_pdp.data_vars.keys())}"
+            )
+
+        if pdp_sub10.shape[-1] != 32:
+            raise ValueError(f"Expected last dimension to be 32 taps, got shape {pdp_sub10.shape}")
+
+        pdp_sub10 = pdp_sub10.astype(np.float32)
+        data = {
+            'sub10_pdp': torch.from_numpy(pdp_sub10).float(),
+            'subthz_channel': torch.from_numpy(np.zeros((0,), dtype=np.float32)).float(),
         }
 
         return data, label, user_id
