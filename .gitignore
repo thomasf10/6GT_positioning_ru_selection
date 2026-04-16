@@ -15,7 +15,9 @@ __pycache__/
 .Python
 *.egg-info/
 
-\dataset
+
 *results*/
 *stored*/
 *plots*/
+*office_sapce_inline*/
+*office_space_reduced_inline*/
