@@ -1,0 +1,801 @@
+label,nmse_db,cdf
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-27.7931824465904,0.00119904076738609
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-27.5959604826878,0.00420799403153793
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-27.3987385187852,0.00588877289978715
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-27.2015165548826,0.00861168891563097
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-27.0042945909799,0.0122322218957604
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-26.8070726270773,0.0140947395476396
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-26.6098506631747,0.0163736140803319
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-26.4126286992721,0.0206342816457851
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-26.2154067353694,0.0219308276260112
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-26.0181847714668,0.0223635573681941
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-25.8209628075642,0.0230859574838928
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-25.6237408436616,0.0255359898056359
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-25.426518879759,0.028120531895625
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-25.2292969158563,0.0296752393871631
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-25.0320749519537,0.0309156201863246
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-24.8348529880511,0.0345447331062429
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-24.6376310241485,0.037010692367923
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-24.4404090602459,0.0395213513499682
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-24.2431870963432,0.0400654082007827
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-24.0459651324406,0.0405734364254617
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-23.848743168538,0.0441923556293106
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-23.6515212046354,0.0479622073788867
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-23.4542992407327,0.0495140628702005
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-23.2570772768301,0.0524216813443925
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-23.0598553129275,0.0612264348874479
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-22.8626333490249,0.068173878222771
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-22.6654113851223,0.075828901664239
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-22.4681894212196,0.0796010042020535
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-22.270967457317,0.0824690734522417
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-22.0737454934144,0.0857095707237011
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-21.8765235295118,0.0874336248193538
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-21.6793015656092,0.0903631649892673
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-21.4820796017065,0.0941799696040613
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-21.2848576378039,0.0968735518758265
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-21.0876356739013,0.0993264112027042
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-20.8904137099987,0.10372892385945
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-20.693191746096,0.106049626321065
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-20.4959697821934,0.10735894124075
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-20.2987478182908,0.113652083358434
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-20.1015258543882,0.115378522491558
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-19.9043038904856,0.116120610833508
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-19.7070819265829,0.118923365611876
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-19.5098599626803,0.119722029816994
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-19.3126379987777,0.122884579773404
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-19.1154160348751,0.125746744353202
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-18.9181940709725,0.128956098810639
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-18.7209721070698,0.129934696825914
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-18.5237501431672,0.130494721438092
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-18.3265281792646,0.137650304678721
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-18.129306215362,0.14514702340649
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-17.9320842514593,0.154270660754049
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-17.7348622875567,0.161297337378577
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-17.5376403236541,0.166102780718377
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-17.3404183597515,0.171138604322207
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-17.1431963958489,0.17548498226785
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-16.9459744319462,0.179480056220837
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-16.7487524680436,0.184733106091605
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-16.551530504141,0.185736639814738
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-16.3543085402384,0.192091750101962
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-16.1570865763358,0.204256482413763
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-15.9598646124331,0.219871653526458
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-15.7626426485305,0.228394295973022
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-15.5654206846279,0.236113890158267
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-15.3681987207253,0.24292944789813
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-15.1709767568226,0.25229014760514
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-14.97375479292,0.260616357409768
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-14.7765328290174,0.262752739745867
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-14.5793108651148,0.267201213743806
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-14.3820889012122,0.272215914749807
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-14.1848669373095,0.277098754752143
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-13.9876449734069,0.280264473732345
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-13.7904230095043,0.282629549943372
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-13.5932010456017,0.283911186163692
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-13.3959790816991,0.285990823689276
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-13.1987571177964,0.287995167321963
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-13.0015351538938,0.292738426638853
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-12.8043131899912,0.296525126602372
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-12.6070912260886,0.299892238170143
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-12.4098692621859,0.301965962744926
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-12.2126472982833,0.31848551472905
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-12.0154253343807,0.334359243015921
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-11.8182033704781,0.352478336206065
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-11.6209814065755,0.368222010351261
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-11.4237594426728,0.372033433031334
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-11.2265374787702,0.379014410608605
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-11.0293155148676,0.382957309781409
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-10.832093550965,0.385031752510377
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-10.6348715870624,0.386289579999929
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-10.4376496231597,0.388396687989141
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-10.2404276592571,0.393326462866037
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-10.0432056953545,0.395776804822203
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-9.84598373145187,0.400258112070789
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-9.64876176754925,0.404575011936873
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-9.45153980364663,0.411405411543746
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-9.254317839744,0.414150677219036
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-9.05709587584138,0.415486722816949
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-8.85987391193876,0.417483744300379
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-8.66265194803614,0.418144177836241
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-8.46542998413352,0.418932565900055
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-8.2682080202309,0.419776151795342
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-8.07098605632828,0.420348656566298
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-7.87376409242565,0.421205684090986
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-7.67654212852303,0.422876348524655
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-7.47932016462041,0.444176516145872
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-7.28209820071779,0.456298005486015
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-7.08487623681517,0.465716252426164
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-6.88765427291255,0.480686496246599
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-6.69043230900992,0.49734461525222
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-6.4932103451073,0.527389844755916
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-6.29598838120468,0.557398673152307
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-6.09876641730206,0.573168405236107
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-5.90154445339944,0.585500771694238
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-5.70432248949682,0.594013336107746
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-5.5071005255942,0.598120021595672
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-5.30987856169158,0.604234555732773
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-5.11265659778896,0.608525706763346
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-4.91543463388633,0.613283026034059
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-4.71821266998371,0.615160404475369
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-4.52099070608109,0.615954943600637
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-4.32376874217847,0.621374028286657
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-4.12654677827585,0.624706295310369
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-3.92932481437322,0.639691939866604
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-3.7321028504706,0.647091505513432
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-3.53488088656798,0.663700115250354
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-3.33765892266536,0.675800144241199
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-3.14043695876274,0.699194097112967
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-2.94321499486012,0.718585776529331
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-2.7459930309575,0.734232897559084
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-2.54877106705488,0.746929816017468
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-2.35154910315226,0.765097706950505
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-2.15432713924963,0.770620671355603
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-1.95710517534701,0.778462946718824
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-1.75988321144439,0.784217831767298
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-1.56266124754177,0.790499812822426
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-1.36543928363915,0.793899895968485
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-1.16821731973653,0.794456479745629
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-0.970995355833903,0.795448332318335
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-0.773773391931282,0.799026434107034
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-0.576551428028662,0.802795568130199
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-0.379329464126041,0.808472743106951
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",-0.18210750022342,0.809869379161713
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",0.015114463679204,0.811933624035744
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",0.212336427581825,0.814821748053836
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",0.409558391484445,0.817026312668734
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",0.606780355387066,0.817815012805633
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",0.804002319289687,0.818366105998351
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",1.00122428319231,0.818917199191069
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",1.19844624709493,0.821272592056225
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",1.39566821099755,0.823123931199792
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",1.59289017490017,0.824611069468474
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",1.79011213880279,0.827636651977309
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",1.98733410270542,0.83288822482389
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",2.18455606660804,0.834160022719378
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",2.38177803051066,0.835200199606664
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",2.57899999441328,0.836645209826014
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",2.7762219583159,0.842213605768254
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",2.97344392221853,0.848238755232358
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",3.17066588612115,0.853264443872664
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",3.36788785002377,0.858801595679935
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",3.56510981392639,0.869108747670702
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",3.76233177782901,0.883238704119592
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",3.95955374173163,0.888733379426616
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",4.15677570563425,0.898996224514703
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",4.35399766953688,0.904912784011927
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",4.5512196334395,0.91125932446282
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",4.74844159734212,0.91215914500848
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",4.94566356124474,0.915975166587245
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",5.14288552514736,0.924161052232356
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",5.34010748904998,0.927766864200211
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",5.5373294529526,0.934086234926777
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",5.73455141685522,0.935124486785298
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",5.93177338075784,0.939627291774334
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",6.12899534466046,0.941640476944607
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",6.32621730856309,0.942917679026985
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",6.52343927246571,0.947593460225018
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",6.72066123636833,0.948206580924701
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",6.91788320027095,0.949045303339465
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",7.11510516417357,0.950842056296015
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",7.31232712807619,0.953254211522676
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",7.50954909197882,0.954270261613497
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",7.70677105588144,0.958941037927817
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",7.90399301978406,0.961346400906754
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",8.10121498368668,0.963744304760669
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",8.29843694758931,0.964937304590556
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",8.49565891149193,0.967461015363722
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",8.69288087539455,0.968438432685697
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",8.89010283929717,0.969087866707824
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",9.08732480319979,0.969557192903988
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",9.28454676710241,0.970026345100245
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",9.48176873100503,0.970463498896241
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",9.67899069490765,0.970900652692236
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",9.87621265881027,0.971563867542538
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",10.0734346227129,0.972910424420557
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",10.2706565866155,0.976235421240015
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",10.4678785505181,0.981886878481834
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",10.6651005144208,0.989676032298753
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",10.8623224783234,0.99417123154519
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",11.059544442226,0.996396596833724
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",11.2567664061286,0.998041375007032
+"Baseline 2: Optimal RU, fixed beams (0°/0°)",11.4539883700312,1.0
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-27.7931824465904,0.00119904076738609
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-27.5320337783741,0.00470438941865411
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-27.2708851101577,0.00793735837721657
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-27.0097364419414,0.0121507617822051
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-26.748587773725,0.0145593964320763
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-26.4874391055086,0.0193602642337177
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-26.2262904372923,0.0219069474179762
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-25.9651417690759,0.0224799403728809
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-25.7039931008596,0.0246688481205749
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-25.4428444326432,0.0280378336304182
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-25.1816957644269,0.0301103306611307
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-24.9205470962105,0.033714734726
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-24.6593984279942,0.0367514617258707
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-24.3982497597778,0.0396659790091256
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-24.1371010915615,0.0403386773823997
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-23.8759524233451,0.0436859865436991
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-23.6148037551287,0.0482318784500101
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-23.3536550869124,0.0508218559169031
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-23.092506418696,0.0595184243585203
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-22.8313577504797,0.0688438906911815
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-22.5702090822633,0.0778473035927388
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-22.309060414047,0.0811347424978903
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-22.0479117458306,0.0859023222270247
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-21.7867630776143,0.0892658490555469
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-21.5256144093979,0.0916678012653675
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-21.2644657411815,0.0971800426796967
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-21.0033170729652,0.100863797633299
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-20.7421684047488,0.102256508210446
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-20.4810197365325,0.10388560099621
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-20.2198710683161,0.108611243225954
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-19.9587224000998,0.109920646123235
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-19.6975737318834,0.112966665877691
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-19.4364250636671,0.114359219443588
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-19.1752763954507,0.118358803211204
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-18.9141277272344,0.121365047142969
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-18.652979059018,0.121895829560996
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-18.3918303908016,0.123842515798014
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-18.1306817225853,0.134325876552985
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-17.8695330543689,0.14461883578888
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-17.6083843861526,0.151891249120682
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-17.3472357179362,0.157817025168349
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-17.0860870497199,0.163217851713871
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-16.8249383815035,0.168695636071851
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-16.5637897132872,0.171285771500078
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-16.3026410450708,0.182335490993984
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-16.0414923768545,0.195129374580698
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-15.7803437086381,0.208761356071189
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-15.5191950404217,0.217761493421553
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-15.2580463722054,0.228204473093368
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-14.996897703989,0.239025774391233
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-14.7357490357727,0.242729365529639
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-14.4746003675563,0.247409113694588
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-14.21345169934,0.253711973839844
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-13.9523030311236,0.258104021227101
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-13.6911543629073,0.26048810743163
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-13.4300056946909,0.262822589507283
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-13.1688570264746,0.265404906913555
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-12.9077083582582,0.267723986006884
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-12.6465596900418,0.269439513174268
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-12.3854110218255,0.272522593928603
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-12.1242623536091,0.295146700395757
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-11.8631136853928,0.314771169601449
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-11.6019650171764,0.331359539224539
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-11.3408163489601,0.337027988544117
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-11.0796676807437,0.344292448498238
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-10.8185190125274,0.346973840205721
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-10.557370344311,0.349704001697366
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-10.2962216760946,0.355852003304527
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-10.0350730078783,0.362571699875943
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-9.77392433966194,0.368107944398323
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-9.51277567144558,0.370750075735335
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-9.25162700322923,0.375307526316135
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-8.99047833501288,0.376259527575519
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-8.72932966679652,0.378341841951743
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-8.46818099858017,0.382498607695966
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-8.20703233036381,0.385451126609584
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-7.94588366214746,0.392414091591802
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-7.6847349939311,0.394143351222418
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-7.42358632571475,0.419068161487454
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-7.16243765749839,0.434713805390258
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-6.90128898928204,0.457443343869667
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-6.64014032106568,0.479741557111792
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-6.37899165284933,0.526973556133738
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-6.11784298463298,0.548940849994945
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-5.85669431641662,0.569392144196238
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-5.59554564820026,0.578755933229398
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-5.33439697998391,0.586785768811698
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-5.07324831176756,0.591493327829772
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-4.8120996435512,0.595586246601957
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-4.55095097533485,0.597069144838379
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-4.28980230711849,0.602870357950985
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-4.02865363890214,0.609007640693148
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-3.76750497068578,0.617120552100941
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-3.50635630246943,0.63296540252342
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-3.24520763425307,0.645374230765324
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-2.98405896603672,0.674489904993109
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-2.72291029782036,0.698504220321839
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-2.46176162960401,0.712266858504872
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-2.20061296138765,0.723335243167813
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-1.9394642931713,0.74001354378709
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-1.67831562495494,0.7499658900382
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-1.41716695673859,0.755933505455992
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-1.15601828852223,0.758872568577798
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-0.894869620305879,0.762601868846757
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-0.633720952089526,0.765576465005981
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-0.372572283873168,0.76878851421177
+"Baseline 4: Closest RU, fixed beams (0°/0°)",-0.111423615656815,0.770688954077254
+"Baseline 4: Closest RU, fixed beams (0°/0°)",0.149725052559539,0.776371151009751
+"Baseline 4: Closest RU, fixed beams (0°/0°)",0.410873720775893,0.782947757229587
+"Baseline 4: Closest RU, fixed beams (0°/0°)",0.67202238899225,0.78409978987375
+"Baseline 4: Closest RU, fixed beams (0°/0°)",0.933171057208604,0.787714673226204
+"Baseline 4: Closest RU, fixed beams (0°/0°)",1.19431972542496,0.78916717759053
+"Baseline 4: Closest RU, fixed beams (0°/0°)",1.45546839364131,0.789931724863302
+"Baseline 4: Closest RU, fixed beams (0°/0°)",1.71661706185767,0.791416778158008
+"Baseline 4: Closest RU, fixed beams (0°/0°)",1.97776573007402,0.79175222399197
+"Baseline 4: Closest RU, fixed beams (0°/0°)",2.23891439829038,0.792087669825932
+"Baseline 4: Closest RU, fixed beams (0°/0°)",2.50006306650673,0.792423115659893
+"Baseline 4: Closest RU, fixed beams (0°/0°)",2.76121173472309,0.795006513135087
+"Baseline 4: Closest RU, fixed beams (0°/0°)",3.02236040293944,0.796613139596805
+"Baseline 4: Closest RU, fixed beams (0°/0°)",3.28350907115579,0.797359882135503
+"Baseline 4: Closest RU, fixed beams (0°/0°)",3.54465773937215,0.805243130826443
+"Baseline 4: Closest RU, fixed beams (0°/0°)",3.80580640758851,0.815606862847674
+"Baseline 4: Closest RU, fixed beams (0°/0°)",4.06695507580486,0.818835195282578
+"Baseline 4: Closest RU, fixed beams (0°/0°)",4.32810374402122,0.827388604097738
+"Baseline 4: Closest RU, fixed beams (0°/0°)",4.58925241223757,0.832297363053
+"Baseline 4: Closest RU, fixed beams (0°/0°)",4.85040108045392,0.839109338546707
+"Baseline 4: Closest RU, fixed beams (0°/0°)",5.11154974867028,0.843848797850742
+"Baseline 4: Closest RU, fixed beams (0°/0°)",5.37269841688663,0.850167937791633
+"Baseline 4: Closest RU, fixed beams (0°/0°)",5.63384708510299,0.856908165814902
+"Baseline 4: Closest RU, fixed beams (0°/0°)",5.89499575331935,0.862207508161928
+"Baseline 4: Closest RU, fixed beams (0°/0°)",6.1561444215357,0.865379878420223
+"Baseline 4: Closest RU, fixed beams (0°/0°)",6.41729308975205,0.869929138159955
+"Baseline 4: Closest RU, fixed beams (0°/0°)",6.67844175796841,0.874631858720167
+"Baseline 4: Closest RU, fixed beams (0°/0°)",6.93959042618476,0.877272785604331
+"Baseline 4: Closest RU, fixed beams (0°/0°)",7.20073909440112,0.87973974588334
+"Baseline 4: Closest RU, fixed beams (0°/0°)",7.46188776261747,0.880981278522349
+"Baseline 4: Closest RU, fixed beams (0°/0°)",7.72303643083383,0.884947719912236
+"Baseline 4: Closest RU, fixed beams (0°/0°)",7.98418509905018,0.888251646562895
+"Baseline 4: Closest RU, fixed beams (0°/0°)",8.24533376726653,0.893464570811854
+"Baseline 4: Closest RU, fixed beams (0°/0°)",8.50648243548289,0.895092285515519
+"Baseline 4: Closest RU, fixed beams (0°/0°)",8.76763110369925,0.898179783470605
+"Baseline 4: Closest RU, fixed beams (0°/0°)",9.0287797719156,0.904184241442661
+"Baseline 4: Closest RU, fixed beams (0°/0°)",9.28992844013196,0.906625543915695
+"Baseline 4: Closest RU, fixed beams (0°/0°)",9.55107710834831,0.913221394349712
+"Baseline 4: Closest RU, fixed beams (0°/0°)",9.81222577656466,0.91946943169088
+"Baseline 4: Closest RU, fixed beams (0°/0°)",10.073374444781,0.92374931323998
+"Baseline 4: Closest RU, fixed beams (0°/0°)",10.3345231129974,0.927972229556433
+"Baseline 4: Closest RU, fixed beams (0°/0°)",10.5956717812137,0.933049073308963
+"Baseline 4: Closest RU, fixed beams (0°/0°)",10.8568204494301,0.940704067682238
+"Baseline 4: Closest RU, fixed beams (0°/0°)",11.1179691176464,0.9489658496283
+"Baseline 4: Closest RU, fixed beams (0°/0°)",11.3791177858628,0.953991313186275
+"Baseline 4: Closest RU, fixed beams (0°/0°)",11.6402664540791,0.959710320644623
+"Baseline 4: Closest RU, fixed beams (0°/0°)",11.9014151222955,0.96558819943462
+"Baseline 4: Closest RU, fixed beams (0°/0°)",12.1625637905119,0.969743453405959
+"Baseline 4: Closest RU, fixed beams (0°/0°)",12.4237124587282,0.972747618152978
+"Baseline 4: Closest RU, fixed beams (0°/0°)",12.6848611269446,0.973705191212675
+"Baseline 4: Closest RU, fixed beams (0°/0°)",12.9460097951609,0.976397439015319
+"Baseline 4: Closest RU, fixed beams (0°/0°)",13.2071584633773,0.977235961739489
+"Baseline 4: Closest RU, fixed beams (0°/0°)",13.4683071315936,0.980247577680411
+"Baseline 4: Closest RU, fixed beams (0°/0°)",13.72945579981,0.98117180135297
+"Baseline 4: Closest RU, fixed beams (0°/0°)",13.9906044680263,0.983280499830158
+"Baseline 4: Closest RU, fixed beams (0°/0°)",14.2517531362427,0.984198649536489
+"Baseline 4: Closest RU, fixed beams (0°/0°)",14.5129018044591,0.986558811137445
+"Baseline 4: Closest RU, fixed beams (0°/0°)",14.7740504726754,0.987674859252406
+"Baseline 4: Closest RU, fixed beams (0°/0°)",15.0351991408918,0.988636077772202
+"Baseline 4: Closest RU, fixed beams (0°/0°)",15.2963478091081,0.990663179891976
+"Baseline 4: Closest RU, fixed beams (0°/0°)",15.5574964773245,0.992956678024696
+"Baseline 4: Closest RU, fixed beams (0°/0°)",15.8186451455408,0.993720025995092
+"Baseline 4: Closest RU, fixed beams (0°/0°)",16.0797938137572,0.994326180537414
+"Baseline 4: Closest RU, fixed beams (0°/0°)",16.3409424819735,0.994838799611331
+"Baseline 4: Closest RU, fixed beams (0°/0°)",16.6020911501899,0.996172566200132
+"Baseline 4: Closest RU, fixed beams (0°/0°)",16.8632398184062,0.996694089775155
+"Baseline 4: Closest RU, fixed beams (0°/0°)",17.1243884866226,0.997006698842089
+"Baseline 4: Closest RU, fixed beams (0°/0°)",17.385537154839,0.997319307909023
+"Baseline 4: Closest RU, fixed beams (0°/0°)",17.6466858230553,0.997617668040876
+"Baseline 4: Closest RU, fixed beams (0°/0°)",17.9078344912717,0.99778179152662
+"Baseline 4: Closest RU, fixed beams (0°/0°)",18.168983159488,0.997945915012364
+"Baseline 4: Closest RU, fixed beams (0°/0°)",18.4301318277044,0.998110038498108
+"Baseline 4: Closest RU, fixed beams (0°/0°)",18.6912804959207,0.998274161983852
+"Baseline 4: Closest RU, fixed beams (0°/0°)",18.9524291641371,0.998438285469596
+"Baseline 4: Closest RU, fixed beams (0°/0°)",19.2135778323534,0.998602408955339
+"Baseline 4: Closest RU, fixed beams (0°/0°)",19.4747265005698,0.998766532441083
+"Baseline 4: Closest RU, fixed beams (0°/0°)",19.7358751687861,0.998854220359871
+"Baseline 4: Closest RU, fixed beams (0°/0°)",19.9970238370025,0.998921619162232
+"Baseline 4: Closest RU, fixed beams (0°/0°)",20.2581725052189,0.998989017964592
+"Baseline 4: Closest RU, fixed beams (0°/0°)",20.5193211734352,0.999056416766953
+"Baseline 4: Closest RU, fixed beams (0°/0°)",20.7804698416516,0.999123815569313
+"Baseline 4: Closest RU, fixed beams (0°/0°)",21.0416185098679,0.999191214371674
+"Baseline 4: Closest RU, fixed beams (0°/0°)",21.3027671780843,0.999258613174034
+"Baseline 4: Closest RU, fixed beams (0°/0°)",21.5639158463006,0.999326011976395
+"Baseline 4: Closest RU, fixed beams (0°/0°)",21.825064514517,0.999393410778755
+"Baseline 4: Closest RU, fixed beams (0°/0°)",22.0862131827333,0.999460809581116
+"Baseline 4: Closest RU, fixed beams (0°/0°)",22.3473618509497,0.999528208383476
+"Baseline 4: Closest RU, fixed beams (0°/0°)",22.608510519166,0.999595607185837
+"Baseline 4: Closest RU, fixed beams (0°/0°)",22.8696591873824,0.999663005988197
+"Baseline 4: Closest RU, fixed beams (0°/0°)",23.1308078555988,0.999730404790558
+"Baseline 4: Closest RU, fixed beams (0°/0°)",23.3919565238151,0.999797803592918
+"Baseline 4: Closest RU, fixed beams (0°/0°)",23.6531051920315,0.999865202395279
+"Baseline 4: Closest RU, fixed beams (0°/0°)",23.9142538602478,0.999932601197639
+"Baseline 4: Closest RU, fixed beams (0°/0°)",24.1754025284642,1.0
+Approach 1: \ghz CSI input,-27.7931824465904,0.00119904076738609
+Approach 1: \ghz CSI input,-27.4720661250784,0.00522923401099384
+Approach 1: \ghz CSI input,-27.1509498035664,0.00780843871471779
+Approach 1: \ghz CSI input,-26.8298334820544,0.0127410927516738
+Approach 1: \ghz CSI input,-26.5087171605424,0.0169162615786934
+Approach 1: \ghz CSI input,-26.1876008390303,0.0195937557177324
+Approach 1: \ghz CSI input,-25.8664845175183,0.0202983252305237
+Approach 1: \ghz CSI input,-25.5453681960063,0.0249832698381104
+Approach 1: \ghz CSI input,-25.2242518744943,0.0273441639054033
+Approach 1: \ghz CSI input,-24.9031355529823,0.0314852943380624
+Approach 1: \ghz CSI input,-24.5820192314703,0.0354091118750558
+Approach 1: \ghz CSI input,-24.2609029099582,0.037621692127334
+Approach 1: \ghz CSI input,-23.9397865884462,0.0398655034389119
+Approach 1: \ghz CSI input,-23.6186702669342,0.0458053993442165
+Approach 1: \ghz CSI input,-23.2975539454222,0.0494943409658712
+Approach 1: \ghz CSI input,-22.9764376239102,0.0564166625768167
+Approach 1: \ghz CSI input,-22.6553213023982,0.0602529141260214
+Approach 1: \ghz CSI input,-22.3342049808861,0.0637621926973563
+Approach 1: \ghz CSI input,-22.0130886593741,0.0681765337342869
+Approach 1: \ghz CSI input,-21.6919723378621,0.0711113062376065
+Approach 1: \ghz CSI input,-21.3708560163501,0.0753148815504318
+Approach 1: \ghz CSI input,-21.0497396948381,0.0800730143743994
+Approach 1: \ghz CSI input,-20.7286233733261,0.084269561042932
+Approach 1: \ghz CSI input,-20.407507051814,0.0871049146798462
+Approach 1: \ghz CSI input,-20.086390730302,0.0926372911985629
+Approach 1: \ghz CSI input,-19.76527440879,0.0946575849907716
+Approach 1: \ghz CSI input,-19.444158087278,0.0961427776903112
+Approach 1: \ghz CSI input,-19.123041765766,0.100183789492727
+Approach 1: \ghz CSI input,-18.801925444254,0.103325927669744
+Approach 1: \ghz CSI input,-18.4808091227419,0.104237758379977
+Approach 1: \ghz CSI input,-18.1596928012299,0.113715582520037
+Approach 1: \ghz CSI input,-17.8385764797179,0.124675963406296
+Approach 1: \ghz CSI input,-17.5174601582059,0.134667794767974
+Approach 1: \ghz CSI input,-17.1963438366939,0.140172455418685
+Approach 1: \ghz CSI input,-16.8752275151819,0.147770639143566
+Approach 1: \ghz CSI input,-16.5541111936698,0.150951326117573
+Approach 1: \ghz CSI input,-16.2329948721578,0.164253219574023
+Approach 1: \ghz CSI input,-15.9118785506458,0.18302911901334
+Approach 1: \ghz CSI input,-15.5907622291338,0.193279610362516
+Approach 1: \ghz CSI input,-15.2696459076218,0.200332692280199
+Approach 1: \ghz CSI input,-14.9485295861098,0.207504321517908
+Approach 1: \ghz CSI input,-14.6274132645977,0.210292069381798
+Approach 1: \ghz CSI input,-14.3062969430857,0.215884964171967
+Approach 1: \ghz CSI input,-13.9851806215737,0.221541317289167
+Approach 1: \ghz CSI input,-13.6640643000617,0.224968390716571
+Approach 1: \ghz CSI input,-13.3429479785497,0.229257550618917
+Approach 1: \ghz CSI input,-13.0218316570377,0.232267868436465
+Approach 1: \ghz CSI input,-12.7007153355256,0.236272338436941
+Approach 1: \ghz CSI input,-12.3795990140136,0.237372164333695
+Approach 1: \ghz CSI input,-12.0584826925016,0.261943399979548
+Approach 1: \ghz CSI input,-11.7373663709896,0.280364553287393
+Approach 1: \ghz CSI input,-11.4162500494776,0.293871169212309
+Approach 1: \ghz CSI input,-11.0951337279656,0.303387126105434
+Approach 1: \ghz CSI input,-10.7740174064535,0.307062295987239
+Approach 1: \ghz CSI input,-10.4529010849415,0.309090821329639
+Approach 1: \ghz CSI input,-10.1317847634295,0.315411434049254
+Approach 1: \ghz CSI input,-9.8106684419175,0.321149401913958
+Approach 1: \ghz CSI input,-9.48955212040548,0.327745374513104
+Approach 1: \ghz CSI input,-9.16843579889346,0.332246430513235
+Approach 1: \ghz CSI input,-8.84731947738145,0.337447768461335
+Approach 1: \ghz CSI input,-8.52620315586943,0.342339208329436
+Approach 1: \ghz CSI input,-8.20508683435741,0.344622891165876
+Approach 1: \ghz CSI input,-7.8839705128454,0.347297055526285
+Approach 1: \ghz CSI input,-7.56285419133338,0.354216614917508
+Approach 1: \ghz CSI input,-7.24173786982136,0.38756828856138
+Approach 1: \ghz CSI input,-6.92062154830935,0.403995732146684
+Approach 1: \ghz CSI input,-6.59950522679733,0.42191375128875
+Approach 1: \ghz CSI input,-6.27838890528531,0.471412618300968
+Approach 1: \ghz CSI input,-5.9572725837733,0.492891521515275
+Approach 1: \ghz CSI input,-5.63615626226128,0.509708779268144
+Approach 1: \ghz CSI input,-5.31503994074927,0.513491672618776
+Approach 1: \ghz CSI input,-4.99392361923725,0.525267299700738
+Approach 1: \ghz CSI input,-4.67280729772523,0.526428282988789
+Approach 1: \ghz CSI input,-4.35169097621322,0.535989187112935
+Approach 1: \ghz CSI input,-4.0305746547012,0.541779109078435
+Approach 1: \ghz CSI input,-3.70945833318918,0.556654573278794
+Approach 1: \ghz CSI input,-3.38834201167717,0.575867510556192
+Approach 1: \ghz CSI input,-3.06722569016515,0.600698606419587
+Approach 1: \ghz CSI input,-2.74610936865313,0.631588174805314
+Approach 1: \ghz CSI input,-2.42499304714112,0.651114134658811
+Approach 1: \ghz CSI input,-2.1038767256291,0.665498590858502
+Approach 1: \ghz CSI input,-1.78276040411708,0.682306603879237
+Approach 1: \ghz CSI input,-1.46164408260507,0.689841752517889
+Approach 1: \ghz CSI input,-1.14052776109305,0.697977907221924
+Approach 1: \ghz CSI input,-0.819411439581035,0.708420404972961
+Approach 1: \ghz CSI input,-0.498295118069016,0.720716363549772
+Approach 1: \ghz CSI input,-0.177178796557001,0.724552053111729
+Approach 1: \ghz CSI input,0.143937524955014,0.731723875992033
+Approach 1: \ghz CSI input,0.465053846467033,0.735615614719769
+Approach 1: \ghz CSI input,0.786170167979048,0.741973756410379
+Approach 1: \ghz CSI input,1.10728648949106,0.74361380796114
+Approach 1: \ghz CSI input,1.42840281100308,0.744416408500103
+Approach 1: \ghz CSI input,1.7495191325151,0.750969708124564
+Approach 1: \ghz CSI input,2.07063545402711,0.753214684402645
+Approach 1: \ghz CSI input,2.39175177553913,0.753797941867772
+Approach 1: \ghz CSI input,2.71286809705115,0.756754155817916
+Approach 1: \ghz CSI input,3.03398441856316,0.764998543363665
+Approach 1: \ghz CSI input,3.35510074007518,0.770391721586741
+Approach 1: \ghz CSI input,3.6762170615872,0.780282177791985
+Approach 1: \ghz CSI input,3.99733338309921,0.788496962333655
+Approach 1: \ghz CSI input,4.31844970461123,0.801905497610775
+Approach 1: \ghz CSI input,4.63956602612324,0.816780098923007
+Approach 1: \ghz CSI input,4.96068234763526,0.829874130450695
+Approach 1: \ghz CSI input,5.28179866914728,0.83784982755824
+Approach 1: \ghz CSI input,5.6029149906593,0.853764756373323
+Approach 1: \ghz CSI input,5.92403131217131,0.858900517688957
+Approach 1: \ghz CSI input,6.24514763368333,0.865557489807075
+Approach 1: \ghz CSI input,6.56626395519534,0.876876510208096
+Approach 1: \ghz CSI input,6.88738027670736,0.881646575268679
+Approach 1: \ghz CSI input,7.20849659821938,0.891046107711239
+Approach 1: \ghz CSI input,7.5296129197314,0.897650794761018
+Approach 1: \ghz CSI input,7.85072924124341,0.905658386334814
+Approach 1: \ghz CSI input,8.17184556275543,0.913904555030172
+Approach 1: \ghz CSI input,8.49296188426744,0.916755577235734
+Approach 1: \ghz CSI input,8.81407820577946,0.919801226178187
+Approach 1: \ghz CSI input,9.13519452729148,0.92165358922
+Approach 1: \ghz CSI input,9.45631084880349,0.923853026724127
+Approach 1: \ghz CSI input,9.77742717031551,0.927510367700548
+Approach 1: \ghz CSI input,10.0985434918275,0.932326507834296
+Approach 1: \ghz CSI input,10.4196598133395,0.938075541406279
+Approach 1: \ghz CSI input,10.7407761348516,0.94352470578369
+Approach 1: \ghz CSI input,11.0618924563636,0.954989878634025
+Approach 1: \ghz CSI input,11.3830087778756,0.962473213464027
+Approach 1: \ghz CSI input,11.7041250993876,0.971365260604927
+Approach 1: \ghz CSI input,12.0252414208996,0.973423946717029
+Approach 1: \ghz CSI input,12.3463577424116,0.975899600552418
+Approach 1: \ghz CSI input,12.6674740639237,0.980708257915254
+Approach 1: \ghz CSI input,12.9885903854357,0.983236529767479
+Approach 1: \ghz CSI input,13.3097067069477,0.985728196851163
+Approach 1: \ghz CSI input,13.6308230284597,0.986461019025133
+Approach 1: \ghz CSI input,13.9519393499717,0.990075282948861
+Approach 1: \ghz CSI input,14.2730556714837,0.990723184855276
+Approach 1: \ghz CSI input,14.5941719929958,0.991059192512271
+Approach 1: \ghz CSI input,14.9152883145078,0.991395200169267
+Approach 1: \ghz CSI input,15.2364046360198,0.992671752807145
+Approach 1: \ghz CSI input,15.5575209575318,0.993162455426541
+Approach 1: \ghz CSI input,15.8786372790438,0.993536596811938
+Approach 1: \ghz CSI input,16.1997536005558,0.993910738197335
+Approach 1: \ghz CSI input,16.5208699220679,0.994853835613739
+Approach 1: \ghz CSI input,16.8419862435799,0.995956907511895
+Approach 1: \ghz CSI input,17.1631025650919,0.996603664431575
+Approach 1: \ghz CSI input,17.4842188866039,0.996943663841309
+Approach 1: \ghz CSI input,17.8053352081159,0.997283663251042
+Approach 1: \ghz CSI input,18.1264515296279,0.997613763850745
+Approach 1: \ghz CSI input,18.44756785114,0.997798982203618
+Approach 1: \ghz CSI input,18.768684172652,0.99798420055649
+Approach 1: \ghz CSI input,19.089800494164,0.998169418909363
+Approach 1: \ghz CSI input,19.410916815676,0.998354637262235
+Approach 1: \ghz CSI input,19.732033137188,0.998539855615108
+Approach 1: \ghz CSI input,20.0531494587,0.99872507396798
+Approach 1: \ghz CSI input,20.3742657802121,0.998815231891067
+Approach 1: \ghz CSI input,20.6953821017241,0.998839410832065
+Approach 1: \ghz CSI input,21.0164984232361,0.998863589773064
+Approach 1: \ghz CSI input,21.3376147447481,0.998887768714063
+Approach 1: \ghz CSI input,21.6587310662601,0.998911947655061
+Approach 1: \ghz CSI input,21.9798473877721,0.99893612659606
+Approach 1: \ghz CSI input,22.3009637092842,0.998960305537059
+Approach 1: \ghz CSI input,22.6220800307962,0.998984484478057
+Approach 1: \ghz CSI input,22.9431963523082,0.999008663419056
+Approach 1: \ghz CSI input,23.2643126738202,0.999032842360054
+Approach 1: \ghz CSI input,23.5854289953322,0.999057021301053
+Approach 1: \ghz CSI input,23.9065453168442,0.999081200242052
+Approach 1: \ghz CSI input,24.2276616383562,0.99910537918305
+Approach 1: \ghz CSI input,24.5487779598683,0.999129558124049
+Approach 1: \ghz CSI input,24.8698942813803,0.999153737065048
+Approach 1: \ghz CSI input,25.1910106028923,0.999177916006046
+Approach 1: \ghz CSI input,25.5121269244043,0.999202094947045
+Approach 1: \ghz CSI input,25.8332432459163,0.999226273888044
+Approach 1: \ghz CSI input,26.1543595674283,0.999250452829042
+Approach 1: \ghz CSI input,26.4754758889404,0.999274631770041
+Approach 1: \ghz CSI input,26.7965922104524,0.999298810711039
+Approach 1: \ghz CSI input,27.1177085319644,0.999322989652038
+Approach 1: \ghz CSI input,27.4388248534764,0.999347168593037
+Approach 1: \ghz CSI input,27.7599411749884,0.999371347534035
+Approach 1: \ghz CSI input,28.0810574965004,0.999395526475034
+Approach 1: \ghz CSI input,28.4021738180125,0.999419705416033
+Approach 1: \ghz CSI input,28.7232901395245,0.999443884357031
+Approach 1: \ghz CSI input,29.0444064610365,0.99946806329803
+Approach 1: \ghz CSI input,29.3655227825485,0.999492242239029
+Approach 1: \ghz CSI input,29.6866391040605,0.999516421180027
+Approach 1: \ghz CSI input,30.0077554255725,0.999540600121026
+Approach 1: \ghz CSI input,30.3288717470846,0.999564779062024
+Approach 1: \ghz CSI input,30.6499880685966,0.999588958003023
+Approach 1: \ghz CSI input,30.9711043901086,0.999613136944022
+Approach 1: \ghz CSI input,31.2922207116206,0.99963731588502
+Approach 1: \ghz CSI input,31.6133370331326,0.999661494826019
+Approach 1: \ghz CSI input,31.9344533546446,0.999685673767018
+Approach 1: \ghz CSI input,32.2555696761567,0.999709852708016
+Approach 1: \ghz CSI input,32.5766859976687,0.999734031649015
+Approach 1: \ghz CSI input,32.8978023191807,0.999758210590014
+Approach 1: \ghz CSI input,33.2189186406927,0.999782389531012
+Approach 1: \ghz CSI input,33.5400349622047,0.999806568472011
+Approach 1: \ghz CSI input,33.8611512837167,0.999830747413009
+Approach 1: \ghz CSI input,34.1822676052288,0.999854926354008
+Approach 1: \ghz CSI input,34.5033839267408,0.999879105295007
+Approach 1: \ghz CSI input,34.8245002482528,0.999903284236005
+Approach 1: \ghz CSI input,35.1456165697648,0.999927463177004
+Approach 1: \ghz CSI input,35.4667328912768,0.999951642118003
+Approach 1: \ghz CSI input,35.7878492127888,0.999975821059001
+Approach 1: \ghz CSI input,36.1089655343009,1.0
+"Approach 1, \thz CSI input",-27.7931824465904,0.00119904076738609
+"Approach 1, \thz CSI input",-27.5520874942009,0.00454867089479402
+"Approach 1, \thz CSI input",-27.3109925418114,0.00749635864734363
+"Approach 1, \thz CSI input",-27.0698975894218,0.0098618786184197
+"Approach 1, \thz CSI input",-26.8288026370323,0.0139471356661718
+"Approach 1, \thz CSI input",-26.5877076846428,0.0155702227584435
+"Approach 1, \thz CSI input",-26.3466127322532,0.0214240544253027
+"Approach 1, \thz CSI input",-26.1055177798637,0.022134475030633
+"Approach 1, \thz CSI input",-25.8644228274742,0.0226959640484402
+"Approach 1, \thz CSI input",-25.6233278750847,0.0255547740413615
+"Approach 1, \thz CSI input",-25.3822329226951,0.0283448656041471
+"Approach 1, \thz CSI input",-25.1411379703056,0.0303286209259071
+"Approach 1, \thz CSI input",-24.9000430179161,0.0339133289133752
+"Approach 1, \thz CSI input",-24.6589480655265,0.0367568251469045
+"Approach 1, \thz CSI input",-24.417853113137,0.0396154823169328
+"Approach 1, \thz CSI input",-24.1767581607475,0.0402365238998165
+"Approach 1, \thz CSI input",-23.935663208358,0.0423672751518578
+"Approach 1, \thz CSI input",-23.6945682559684,0.0464445838571636
+"Approach 1, \thz CSI input",-23.4534733035789,0.0495226366112458
+"Approach 1, \thz CSI input",-23.2123783511894,0.0542618109342656
+"Approach 1, \thz CSI input",-22.9712833987998,0.0672492438113969
+"Approach 1, \thz CSI input",-22.7301884464103,0.0712706212963489
+"Approach 1, \thz CSI input",-22.4890934940208,0.0782789387453359
+"Approach 1, \thz CSI input",-22.2479985416313,0.0817964699460742
+"Approach 1, \thz CSI input",-22.0069035892417,0.084526520706519
+"Approach 1, \thz CSI input",-21.7658086368522,0.0874134619449005
+"Approach 1, \thz CSI input",-21.5247136844627,0.0905191824079994
+"Approach 1, \thz CSI input",-21.2836187320731,0.0956922553015191
+"Approach 1, \thz CSI input",-21.0425237796836,0.0997474286041802
+"Approach 1, \thz CSI input",-20.8014288272941,0.104744313191447
+"Approach 1, \thz CSI input",-20.5603338749046,0.106826025153858
+"Approach 1, \thz CSI input",-20.319238922515,0.113283970558369
+"Approach 1, \thz CSI input",-20.0781439701255,0.115466501656661
+"Approach 1, \thz CSI input",-19.837049017736,0.117520468284666
+"Approach 1, \thz CSI input",-19.5959540653464,0.119373385696884
+"Approach 1, \thz CSI input",-19.3548591129569,0.122197297181463
+"Approach 1, \thz CSI input",-19.1137641605674,0.125829730624791
+"Approach 1, \thz CSI input",-18.8726692081778,0.129503943026816
+"Approach 1, \thz CSI input",-18.6315742557883,0.130188547847386
+"Approach 1, \thz CSI input",-18.3904793033988,0.132393278153752
+"Approach 1, \thz CSI input",-18.1493843510093,0.14414366701055
+"Approach 1, \thz CSI input",-17.9082893986197,0.154858313555167
+"Approach 1, \thz CSI input",-17.6671944462302,0.162296777429433
+"Approach 1, \thz CSI input",-17.4260994938407,0.169186662612826
+"Approach 1, \thz CSI input",-17.1850045414511,0.1726430546562
+"Approach 1, \thz CSI input",-16.9439095890616,0.178521117284966
+"Approach 1, \thz CSI input",-16.7028146366721,0.184966853702859
+"Approach 1, \thz CSI input",-16.4617196842826,0.186654702323814
+"Approach 1, \thz CSI input",-16.220624731893,0.201664578424121
+"Approach 1, \thz CSI input",-15.9795297795035,0.216400129324939
+"Approach 1, \thz CSI input",-15.738434827114,0.226569073831181
+"Approach 1, \thz CSI input",-15.4973398747244,0.234789090821996
+"Approach 1, \thz CSI input",-15.2562449223349,0.243831162598301
+"Approach 1, \thz CSI input",-15.0151499699454,0.254776537629355
+"Approach 1, \thz CSI input",-14.7740550175559,0.259199059474061
+"Approach 1, \thz CSI input",-14.5329600651663,0.265663018585577
+"Approach 1, \thz CSI input",-14.2918651127768,0.270141545296411
+"Approach 1, \thz CSI input",-14.0507701603873,0.275865816902371
+"Approach 1, \thz CSI input",-13.8096752079977,0.278909798410484
+"Approach 1, \thz CSI input",-13.5685802556082,0.280475257124568
+"Approach 1, \thz CSI input",-13.3274853032187,0.283854850597342
+"Approach 1, \thz CSI input",-13.0863903508292,0.288270785562847
+"Approach 1, \thz CSI input",-12.8452953984396,0.293402584259822
+"Approach 1, \thz CSI input",-12.6042004460501,0.297523755612364
+"Approach 1, \thz CSI input",-12.3631054936606,0.302345780272566
+"Approach 1, \thz CSI input",-12.122010541271,0.324011051121994
+"Approach 1, \thz CSI input",-11.8809155888815,0.344305297878104
+"Approach 1, \thz CSI input",-11.639820636492,0.363017266664456
+"Approach 1, \thz CSI input",-11.3987256841024,0.366621155501003
+"Approach 1, \thz CSI input",-11.1576307317129,0.371945343277826
+"Approach 1, \thz CSI input",-10.9165357793234,0.375303138832955
+"Approach 1, \thz CSI input",-10.6754408269339,0.376063476337884
+"Approach 1, \thz CSI input",-10.4343458745443,0.377641967734867
+"Approach 1, \thz CSI input",-10.1932509221548,0.379858780326113
+"Approach 1, \thz CSI input",-9.95215596976528,0.386652778002712
+"Approach 1, \thz CSI input",-9.71106101737575,0.388969079342636
+"Approach 1, \thz CSI input",-9.46996606498622,0.391227217695615
+"Approach 1, \thz CSI input",-9.22887111259669,0.399343344802159
+"Approach 1, \thz CSI input",-8.98777616020716,0.400813246176506
+"Approach 1, \thz CSI input",-8.74668120781763,0.402394508415242
+"Approach 1, \thz CSI input",-8.5055862554281,0.405244789021793
+"Approach 1, \thz CSI input",-8.26449130303858,0.407801624576576
+"Approach 1, \thz CSI input",-8.02339635064904,0.410805159691325
+"Approach 1, \thz CSI input",-7.78230139825952,0.413898846155388
+"Approach 1, \thz CSI input",-7.54120644586999,0.422666208957942
+"Approach 1, \thz CSI input",-7.30011149348046,0.447117034736125
+"Approach 1, \thz CSI input",-7.05901654109093,0.464169586415492
+"Approach 1, \thz CSI input",-6.8179215887014,0.482274420270221
+"Approach 1, \thz CSI input",-6.57682663631187,0.503088084653965
+"Approach 1, \thz CSI input",-6.33573168392234,0.547504807592869
+"Approach 1, \thz CSI input",-6.09463673153281,0.567254709084347
+"Approach 1, \thz CSI input",-5.85354177914328,0.580231164053052
+"Approach 1, \thz CSI input",-5.61244682675376,0.58925521497191
+"Approach 1, \thz CSI input",-5.37135187436423,0.59665866273208
+"Approach 1, \thz CSI input",-5.1302569219747,0.601214822016939
+"Approach 1, \thz CSI input",-4.88916196958517,0.605043293472761
+"Approach 1, \thz CSI input",-4.64806701719564,0.607243267243915
+"Approach 1, \thz CSI input",-4.40697206480611,0.611768984878434
+"Approach 1, \thz CSI input",-4.16587711241658,0.617114206638183
+"Approach 1, \thz CSI input",-3.92478216002705,0.624427267671725
+"Approach 1, \thz CSI input",-3.68368720763752,0.637977654690646
+"Approach 1, \thz CSI input",-3.44259225524799,0.648112545637299
+"Approach 1, \thz CSI input",-3.20149730285847,0.66499107679824
+"Approach 1, \thz CSI input",-2.96040235046894,0.692566790879852
+"Approach 1, \thz CSI input",-2.71930739807941,0.71421585141999
+"Approach 1, \thz CSI input",-2.47821244568988,0.731124743709633
+"Approach 1, \thz CSI input",-2.23711749330035,0.74237691454974
+"Approach 1, \thz CSI input",-1.99602254091082,0.752803153261727
+"Approach 1, \thz CSI input",-1.75492758852129,0.761666344825168
+"Approach 1, \thz CSI input",-1.51383263613176,0.769271271417979
+"Approach 1, \thz CSI input",-1.27273768374224,0.772197511802176
+"Approach 1, \thz CSI input",-1.0316427313527,0.774244405728819
+"Approach 1, \thz CSI input",-0.790547778963177,0.779281471858387
+"Approach 1, \thz CSI input",-0.549452826573649,0.78647295412151
+"Approach 1, \thz CSI input",-0.308357874184118,0.791968044553379
+"Approach 1, \thz CSI input",-0.0672629217945904,0.793970771275673
+"Approach 1, \thz CSI input",0.173832030594941,0.799379154901842
+"Approach 1, \thz CSI input",0.414926982984468,0.802173166082375
+"Approach 1, \thz CSI input",0.656021935373996,0.805363687194669
+"Approach 1, \thz CSI input",0.897116887763527,0.806526187174092
+"Approach 1, \thz CSI input",1.13821184015305,0.808892780232999
+"Approach 1, \thz CSI input",1.37930679254258,0.810045155598865
+"Approach 1, \thz CSI input",1.62040174493211,0.814352891337941
+"Approach 1, \thz CSI input",1.86149669732164,0.818767904009269
+"Approach 1, \thz CSI input",2.10259164971117,0.820726173665159
+"Approach 1, \thz CSI input",2.3436866021007,0.821661801577852
+"Approach 1, \thz CSI input",2.58478155449023,0.823464148581279
+"Approach 1, \thz CSI input",2.82587650687976,0.829300497109384
+"Approach 1, \thz CSI input",3.06697145926929,0.832974268754717
+"Approach 1, \thz CSI input",3.30806641165881,0.837326225502223
+"Approach 1, \thz CSI input",3.54916136404835,0.842113341508397
+"Approach 1, \thz CSI input",3.79025631643787,0.857376367088767
+"Approach 1, \thz CSI input",4.0313512688274,0.860944829985607
+"Approach 1, \thz CSI input",4.27244622121693,0.867583524517316
+"Approach 1, \thz CSI input",4.51354117360646,0.874276829355209
+"Approach 1, \thz CSI input",4.75463612599599,0.876433432877072
+"Approach 1, \thz CSI input",4.99573107838552,0.885029284462658
+"Approach 1, \thz CSI input",5.23682603077505,0.889469627702948
+"Approach 1, \thz CSI input",5.47792098316458,0.904264256141519
+"Approach 1, \thz CSI input",5.71901593555411,0.911976169406627
+"Approach 1, \thz CSI input",5.96011088794363,0.91614069365829
+"Approach 1, \thz CSI input",6.20120584033316,0.920870045359432
+"Approach 1, \thz CSI input",6.44230079272269,0.929944675303683
+"Approach 1, \thz CSI input",6.68339574511222,0.934312684574086
+"Approach 1, \thz CSI input",6.92449069750175,0.938067417549795
+"Approach 1, \thz CSI input",7.16558564989128,0.940394299120313
+"Approach 1, \thz CSI input",7.4066806022808,0.942978385082422
+"Approach 1, \thz CSI input",7.64777555467034,0.946347550265689
+"Approach 1, \thz CSI input",7.88887050705987,0.949263456529145
+"Approach 1, \thz CSI input",8.12996545944939,0.951962141692249
+"Approach 1, \thz CSI input",8.37106041183892,0.95463854845268
+"Approach 1, \thz CSI input",8.61215536422845,0.956149212093687
+"Approach 1, \thz CSI input",8.85325031661798,0.958131005038945
+"Approach 1, \thz CSI input",9.09434526900751,0.958450013482995
+"Approach 1, \thz CSI input",9.33544022139704,0.958769021927045
+"Approach 1, \thz CSI input",9.57653517378657,0.959088030371095
+"Approach 1, \thz CSI input",9.81763012617609,0.96146296096272
+"Approach 1, \thz CSI input",10.0587250785656,0.963210616229243
+"Approach 1, \thz CSI input",10.2998200309552,0.965082534000179
+"Approach 1, \thz CSI input",10.5409149833447,0.967164322049387
+"Approach 1, \thz CSI input",10.7820099357342,0.968906134229082
+"Approach 1, \thz CSI input",11.0231048881237,0.971497061287833
+"Approach 1, \thz CSI input",11.2641998405133,0.97428495864688
+"Approach 1, \thz CSI input",11.5052947929028,0.976411989650242
+"Approach 1, \thz CSI input",11.7463897452923,0.978005876372963
+"Approach 1, \thz CSI input",11.9874846976819,0.985140062271003
+"Approach 1, \thz CSI input",12.2285796500714,0.986057031576179
+"Approach 1, \thz CSI input",12.4696746024609,0.986634283987124
+"Approach 1, \thz CSI input",12.7107695548504,0.988599038540342
+"Approach 1, \thz CSI input",12.95186450724,0.989703084559573
+"Approach 1, \thz CSI input",13.1929594596295,0.990369781510843
+"Approach 1, \thz CSI input",13.434054412019,0.992435521183286
+"Approach 1, \thz CSI input",13.6751493644086,0.994283360656268
+"Approach 1, \thz CSI input",13.9162443167981,0.994700472024169
+"Approach 1, \thz CSI input",14.1573392691876,0.99511758339207
+"Approach 1, \thz CSI input",14.3984342215771,0.995851953859166
+"Approach 1, \thz CSI input",14.6395291739667,0.9965119962438
+"Approach 1, \thz CSI input",14.8806241263562,0.996846983186106
+"Approach 1, \thz CSI input",15.1217190787457,0.997181970128413
+"Approach 1, \thz CSI input",15.3628140311353,0.99751695707072
+"Approach 1, \thz CSI input",15.6039089835248,0.997682368718097
+"Approach 1, \thz CSI input",15.8450039359143,0.997790156839966
+"Approach 1, \thz CSI input",16.0860988883038,0.997897944961835
+"Approach 1, \thz CSI input",16.3271938406934,0.998005733083704
+"Approach 1, \thz CSI input",16.5682887930829,0.998113521205573
+"Approach 1, \thz CSI input",16.8093837454724,0.998221309327441
+"Approach 1, \thz CSI input",17.050478697862,0.99832909744931
+"Approach 1, \thz CSI input",17.2915736502515,0.998436885571179
+"Approach 1, \thz CSI input",17.532668602641,0.998544673693048
+"Approach 1, \thz CSI input",17.7737635550306,0.998652461814917
+"Approach 1, \thz CSI input",18.0148585074201,0.998760249936786
+"Approach 1, \thz CSI input",18.2559534598096,0.998887500709844
+"Approach 1, \thz CSI input",18.4970484121991,0.999026563121113
+"Approach 1, \thz CSI input",18.7381433645887,0.999165625532383
+"Approach 1, \thz CSI input",18.9792383169782,0.999304687943652
+"Approach 1, \thz CSI input",19.2203332693677,0.999443750354922
+"Approach 1, \thz CSI input",19.4614282217573,0.999582812766191
+"Approach 1, \thz CSI input",19.7025231741468,0.999721875177461
+"Approach 1, \thz CSI input",19.9436181265363,0.999860937588731
+"Approach 1, \thz CSI input",20.1847130789258,1.0
