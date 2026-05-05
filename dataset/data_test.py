@@ -35,7 +35,7 @@ if __name__ == '__main__':
                            sub10_path,
                            labels_path,
                            mode,
-                           on_grid_only=True
+                           subset='on_grid'
                            )
 
     train_dataloader = torch.utils.data.DataLoader(train_set, batch_size=8, shuffle=True)

@@ -9,14 +9,49 @@ import pandas as pd
 invalid_ue_ideces = [761]
 
 """ Dataset for Positioning """
-# todo add option to make a dataset with only the points under the RUs as a training set
-# use: on_grid_users = ds.where(ds['ue_on_stripe_grid'], drop=True) (see commented code below)
 class CsiPositionDataset(Dataset):
-    def __init__(self, subthz_path, sub10_path, labels_path, mode, on_grid_only=False):
+    """Positioning dataset with on/off-grid splitting.
+
+    Args:
+        subset: 'on_grid' (UEs sitting under an RU — typical training set),
+                'off_grid' (UEs not on the stripe grid),
+                or 'all' (no filtering). Ignored if `user_ids` is provided.
+        max_users: optional cap on the number of users kept after subset
+                filtering. Selection is reproducible via `seed`.
+        seed: RNG seed used when truncating to `max_users`.
+        user_ids: optional explicit list of user_ids. When provided, the
+                dataset uses exactly these users (intersected with what is
+                available on disk for `mode`); `subset` and `max_users` are
+                ignored. Use this to reuse a split saved by another script.
+        exclude_user_ids: optional iterable of user_ids to drop after all
+                other filtering — e.g. to keep train disjoint from val/test.
+    """
+
+    VALID_SUBSETS = ('on_grid', 'off_grid', 'all')
+
+    def __init__(
+        self,
+        subthz_path,
+        sub10_path,
+        labels_path,
+        mode,
+        subset='all',
+        max_users=None,
+        seed=42,
+        user_ids=None,
+        exclude_user_ids=None,
+    ):
         self.subthz_path = subthz_path
         self.sub10_path = sub10_path
         self.labels_path = labels_path
-        self.on_grid_only = on_grid_only #only keep users that are on the stripe grid (i.e. under the RUs)
+
+        if subset not in self.VALID_SUBSETS:
+            raise ValueError(
+                f"Invalid subset '{subset}'. Must be one of: {self.VALID_SUBSETS}"
+            )
+        self.subset = subset
+        self.max_users = max_users
+        self.seed = seed
 
         modes = ['sub10', 'subTHz', 'combined', 'pilot', 'sub10_pilot'] #todo pilot modes currently not implemented
         if mode not in modes:
@@ -26,7 +61,7 @@ class CsiPositionDataset(Dataset):
         self.mode = mode
 
         # --------------------------------------------------
-        # Build list of VALID user_ids
+        # Available user_ids on disk for this mode
         # --------------------------------------------------
 
         sub10_users = set()
@@ -45,32 +80,64 @@ class CsiPositionDataset(Dataset):
                     subthz_users.add(int(match.group(1)))
 
         if mode == "sub10":
-            self.valid_users = sorted(list(sub10_users))
-
+            available = sub10_users
         elif mode == "subTHz":
-            self.valid_users = sorted(list(subthz_users))
-
+            available = subthz_users
         elif mode == "combined":
-            # Only keep users that exist in BOTH folders
-            self.valid_users = sorted(list(sub10_users & subthz_users))
-
+            available = sub10_users & subthz_users
         else:
-            self.valid_users = sorted(list(sub10_users))
+            available = sub10_users
 
-        # Filter for on-grid users if requested
-        if self.on_grid_only:
-            # Load UE locations dataset
-            ue_locations_path = os.path.join(os.path.dirname(sub10_path), "ue_locations", "ue_locations.nc")
-            if os.path.exists(ue_locations_path):
+        # --------------------------------------------------
+        # Either use explicit user_ids, or apply subset / max_users filters
+        # --------------------------------------------------
+        if user_ids is not None:
+            requested = [int(uid) for uid in user_ids]
+            self.valid_users = sorted(uid for uid in requested if uid in available)
+            missing = [uid for uid in requested if uid not in available]
+            if missing:
+                print(
+                    f"Warning: {len(missing)} of {len(requested)} requested user_ids not "
+                    f"available on disk for mode='{mode}'; they were dropped."
+                )
+        else:
+            self.valid_users = sorted(list(available))
+
+            if subset != 'all':
+                ue_locations_path = os.path.join(
+                    os.path.dirname(sub10_path), "ue_locations", "ue_locations.nc"
+                )
+                if not os.path.exists(ue_locations_path):
+                    raise FileNotFoundError(
+                        f"UE locations file required for subset='{subset}' but not found at "
+                        f"{ue_locations_path}."
+                    )
                 ue_ds = xr.load_dataset(ue_locations_path)
-                # Get users that are on the stripe grid
-                on_grid_users = ue_ds.where(ue_ds['ue_on_stripe_grid'], drop=True)
-                on_grid_user_ids = set(on_grid_users['user_id'].values)
-                # Filter valid_users to only include on-grid users
-                self.valid_users = [uid for uid in self.valid_users if uid in on_grid_user_ids]
-                print(f"Filtered to {len(self.valid_users)} on-grid users.")
-            else:
-                print(f"Warning: UE locations file not found at {ue_locations_path}. Skipping on-grid filtering.")
+                on_grid_user_ids = set(
+                    ue_ds.where(ue_ds['ue_on_stripe_grid'], drop=True)['user_id'].values
+                )
+                if subset == 'on_grid':
+                    self.valid_users = [uid for uid in self.valid_users if uid in on_grid_user_ids]
+                else:  # 'off_grid'
+                    self.valid_users = [uid for uid in self.valid_users if uid not in on_grid_user_ids]
+                print(f"Filtered to {len(self.valid_users)} {subset} users.")
+
+            if max_users is not None and len(self.valid_users) > max_users:
+                rng = np.random.default_rng(seed)
+                picked = rng.choice(len(self.valid_users), size=max_users, replace=False)
+                self.valid_users = sorted(self.valid_users[i] for i in picked)
+                print(f"Capped to {len(self.valid_users)} users (max_users={max_users}, seed={seed}).")
+
+        # --------------------------------------------------
+        # Optional explicit exclusion (e.g. keep train disjoint from val/test)
+        # --------------------------------------------------
+        if exclude_user_ids:
+            exclude_set = {int(uid) for uid in exclude_user_ids}
+            before = len(self.valid_users)
+            self.valid_users = [uid for uid in self.valid_users if uid not in exclude_set]
+            removed = before - len(self.valid_users)
+            if removed:
+                print(f"Excluded {removed} user(s) via exclude_user_ids.")
 
         print(f"Found {len(self.valid_users)} valid users.")
 

@@ -7,6 +7,7 @@ three classification heads replaced by a single 2-output regression head.
 
 Uses the on-grid subset of `CsiPositionDataset` (UEs sitting under an RU).
 """
+import json
 import sys
 import time
 from datetime import datetime
@@ -197,6 +198,11 @@ def main():
     epochs = 1
     lr = 3e-4
 
+    # Reuse the val/test split written by `RU_selection/train_csi_ru_beam_sel.py`
+    # so this script evaluates on exactly the same UEs. Set this to the
+    # split_user_ids.json of the RU run you want to align with.
+    ru_split_path = Path('../RU_selection/stored_models_ru_beam_sel/<run_name>/split_user_ids.json')
+
     # --- Model config ---
     conv_channels = 16
     conv_layers = 3
@@ -219,34 +225,70 @@ def main():
     run_dir.mkdir(parents=True, exist_ok=True)
 
     print(f'Using device: {device}')
-    print('Loading CSI positioning dataset...')
+    print('Loading CSI positioning datasets...')
 
-    dataset = CsiPositionDataset(
+    # --- Load val/test user_ids from the RU/beam-selection split ---
+    if not ru_split_path.exists():
+        raise FileNotFoundError(
+            f"RU split file not found at {ru_split_path}. Run "
+            f"RU_selection/train_csi_ru_beam_sel.py first; it writes "
+            f"split_user_ids.json into its run_dir."
+        )
+    with open(ru_split_path) as f:
+        ru_split = json.load(f)
+    saved_val_ids = list(ru_split['val_user_ids'])
+    saved_test_ids = list(ru_split['test_user_ids'])
+    print(f'Loaded RU split from {ru_split_path}: '
+          f'val={len(saved_val_ids)}, test={len(saved_test_ids)}')
+
+    # Train: all on-grid UEs minus anything that landed in the saved val/test
+    # (prevents on-grid UEs from leaking between train and val/test).
+    held_out = set(saved_val_ids) | set(saved_test_ids)
+    train_dataset = CsiPositionDataset(
         subthz_path=subthz_path,
         sub10_path=sub10_path,
         labels_path=labels_path,
         mode=mode,
-        on_grid_only=True,
+        subset='on_grid',
+        exclude_user_ids=held_out,
+    )
+    val_dataset = CsiPositionDataset(
+        subthz_path=subthz_path,
+        sub10_path=sub10_path,
+        labels_path=labels_path,
+        mode=mode,
+        user_ids=saved_val_ids,
+    )
+    test_dataset = CsiPositionDataset(
+        subthz_path=subthz_path,
+        sub10_path=sub10_path,
+        labels_path=labels_path,
+        mode=mode,
+        user_ids=saved_test_ids,
     )
 
-    total_samples = len(dataset)
-    if total_samples < 10:
-        raise ValueError('Dataset too small for train/val/test split')
+    if len(train_dataset) < 1:
+        raise ValueError('Train (on-grid, minus held-out) set is empty.')
+    if len(val_dataset) < 1 or len(test_dataset) < 1:
+        raise ValueError('Val or test set is empty after applying RU split.')
 
-    generator = torch.Generator().manual_seed(42)
-    train_size = int(0.8 * total_samples)
-    val_size = int(0.1 * total_samples)
-    test_size = total_samples - train_size - val_size
-
-    train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(
-        dataset, [train_size, val_size, test_size], generator=generator,
-    )
+    # Hard guarantee that train is disjoint from val/test.
+    train_ids = set(train_dataset.valid_users)
+    val_ids = set(val_dataset.valid_users)
+    test_ids = set(test_dataset.valid_users)
+    overlap_train_test = train_ids & test_ids
+    overlap_train_val = train_ids & val_ids
+    if overlap_train_test or overlap_train_val:
+        raise ValueError(
+            f'Split leakage detected: train∩test={len(overlap_train_test)}, '
+            f'train∩val={len(overlap_train_val)}'
+        )
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
 
-    sample_data, _sample_label, _ = dataset[0]
+    sample_data, _sample_label, _ = train_dataset[0]
     csi_raw = sample_data['sub10_channel']  # (n_aps, ue, ru, sc, 2)
     csi_prepared = prepare_csi_input(csi_raw.unsqueeze(0)).squeeze(0)
     num_aps = csi_raw.shape[0]
@@ -255,7 +297,8 @@ def main():
 
     print('Dataset summary:')
     print(f'  dataset_folder           = {dataset_folder}')
-    print(f'  on_grid_only             = True')
+    print(f'  train subset             = on_grid (minus saved val/test UEs)')
+    print(f'  val/test                 = loaded from {ru_split_path}')
     print(f'  sub10_channel raw shape  = {tuple(csi_raw.shape)}')
     print(f'  sub10_channel conv input = {tuple(csi_prepared.shape)}')
     print(f'  num_aps                  = {num_aps}')
@@ -303,12 +346,12 @@ def main():
         'dataset': {
             'dataset_folder': dataset_folder,
             'mode': mode,
-            'on_grid_only': True,
-            'total_samples': total_samples,
-            'train_size': train_size,
-            'val_size': val_size,
-            'test_size': test_size,
-            'seed': 42,
+            'train_subset': 'on_grid',
+            'ru_split_path': str(ru_split_path),
+            'ru_split_seed': ru_split.get('seed'),
+            'train_size': len(train_dataset),
+            'val_size': len(val_dataset),
+            'test_size': len(test_dataset),
         },
         'training': {
             'epochs': epochs,

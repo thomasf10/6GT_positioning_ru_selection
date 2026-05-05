@@ -9,6 +9,7 @@ Three-head Conv3D model predicting:
 Uses 'optimal_beams' label mode (results.csv) so that beam labels are
 the true optimal beams, not fixed 0°.
 """
+import json
 import sys
 import time
 from datetime import datetime
@@ -325,6 +326,30 @@ def main():
     train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(
         dataset, [train_size, val_size, test_size], generator=generator,
     )
+
+    # Persist the train/val/test user_id lists so other scripts (e.g. positioning)
+    # can reuse the exact same split.
+    def _subset_user_ids(subset_obj):
+        indices = list(subset_obj.indices)
+        cur = subset_obj.dataset
+        while isinstance(cur, torch.utils.data.Subset):
+            indices = [cur.indices[i] for i in indices]
+            cur = cur.dataset
+        return [int(cur.valid_users[i]) for i in indices]
+
+    split_user_ids = {
+        'dataset_folder': dataset_folder,
+        'mode': mode,
+        'seed': 42,
+        'sizes': {'train': train_size, 'val': val_size, 'test': test_size},
+        'train_user_ids': _subset_user_ids(train_dataset),
+        'val_user_ids': _subset_user_ids(val_dataset),
+        'test_user_ids': _subset_user_ids(test_dataset),
+    }
+    split_path = run_dir / 'split_user_ids.json'
+    with open(split_path, 'w') as f:
+        json.dump(split_user_ids, f, indent=2)
+    print(f'Train/val/test user_ids saved to {split_path}')
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
