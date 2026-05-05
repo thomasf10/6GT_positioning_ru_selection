@@ -241,23 +241,25 @@ def main():
     print(f'Loaded RU split from {ru_split_path}: '
           f'val={len(saved_val_ids)}, test={len(saved_test_ids)}')
 
-    # Train: all on-grid UEs minus anything that landed in the saved val/test
-    # (prevents on-grid UEs from leaking between train and val/test).
-    held_out = set(saved_val_ids) | set(saved_test_ids)
+    # Train: all on-grid UEs.
     train_dataset = CsiPositionDataset(
         subthz_path=subthz_path,
         sub10_path=sub10_path,
         labels_path=labels_path,
         mode=mode,
         subset='on_grid',
-        exclude_user_ids=held_out,
     )
+
+    # Val/test: the saved RU val/test lists, but with on-grid UEs removed
+    # (prevents on-grid UEs from leaking out of the training set into val/test).
+    on_grid_ids = set(train_dataset.valid_users)
     val_dataset = CsiPositionDataset(
         subthz_path=subthz_path,
         sub10_path=sub10_path,
         labels_path=labels_path,
         mode=mode,
         user_ids=saved_val_ids,
+        exclude_user_ids=on_grid_ids,
     )
     test_dataset = CsiPositionDataset(
         subthz_path=subthz_path,
@@ -265,6 +267,7 @@ def main():
         labels_path=labels_path,
         mode=mode,
         user_ids=saved_test_ids,
+        exclude_user_ids=on_grid_ids,
     )
 
     if len(train_dataset) < 1:
@@ -297,8 +300,8 @@ def main():
 
     print('Dataset summary:')
     print(f'  dataset_folder           = {dataset_folder}')
-    print(f'  train subset             = on_grid (minus saved val/test UEs)')
-    print(f'  val/test                 = loaded from {ru_split_path}')
+    print(f'  train subset             = on_grid')
+    print(f'  val/test                 = loaded from {ru_split_path} (on-grid UEs removed)')
     print(f'  sub10_channel raw shape  = {tuple(csi_raw.shape)}')
     print(f'  sub10_channel conv input = {tuple(csi_prepared.shape)}')
     print(f'  num_aps                  = {num_aps}')
