@@ -286,7 +286,7 @@ def main():
     # Reuse the val/test split written by `RU_selection/train_csi_ru_beam_sel.py`
     # so this script evaluates on exactly the same UEs. Set this to the
     # split_user_ids.json of the RU run you want to align with.
-    ru_split_path = Path('../RU_selection/stored_models_ru_beam_sel/<run_name>/split_user_ids.json')
+    ru_split_path = Path('../RU_selection/stored_models_ru_beam_sel/csi_conv3d_ru_beam_ep1_bs32_lr3e-04_cc16_cl3_fc256_do0.3_0505_1135/split_user_ids.json')
 
     # --- Model config ---
     conv_channels = 16

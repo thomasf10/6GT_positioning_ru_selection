@@ -98,20 +98,23 @@ def main():
 
     # Pretrained RU/beam-selection checkpoint to seed the backbone with.
     # Point this at the best_model.pt of the RU run you want to fine-tune from.
+    # pretrained_ckpt_path = Path(
+    #     '../RU_selection/stored_models_ru_beam_sel/csi_conv3d_ru_beam_ep20_bs32_lr3e-04_cc16_cl3_fc256_do0.3_0409_1032/best_model.pt'
+    # ) # ru and beam sel model
     pretrained_ckpt_path = Path(
-        '../RU_selection/stored_models_ru_beam_sel/<run_name>/best_model.pt'
-    )
+        '../RU_selection/stored_models\csi_conv3d_ep20_bs32_lr3e-04_cc16_cl3_fc256_do0.3_fixed_beams_0408_1024/best_model.pt'
+    ) # ru selection only model
     # Reuse the val/test split saved by that same RU run for direct comparability.
     ru_split_path = Path(
-        '../RU_selection/stored_models_ru_beam_sel/<run_name>/split_user_ids.json'
+        '../RU_selection/stored_models_ru_beam_sel/csi_conv3d_ru_beam_ep1_bs32_lr3e-04_cc16_cl3_fc256_do0.3_0505_1135/split_user_ids.json'
     )
 
     # --- Training config ---
     mode = 'sub10'
-    batch_size = 32
-    epochs = 1
-    lr = 1e-4                # smaller than from-scratch — typical for fine-tuning
-    freeze_backbone = False  # if True, train only the position head
+    batch_size = 8
+    epochs = 150
+    lr = 1e-3           #1e-4    # smaller than from-scratch — typical for fine-tuning
+    freeze_backbone = True  # if True, train only the position head
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -143,7 +146,7 @@ def main():
         f'_frz{int(freeze_backbone)}'
         f'_{timestamp}'
     )
-    run_dir = Path('stored_models_positioning_sub10_finetuned') / run_name
+    run_dir = Path('stored_models_positioning_sub10_downstream') / run_name
     run_dir.mkdir(parents=True, exist_ok=True)
 
     print(f'Using device: {device}')
@@ -182,6 +185,7 @@ def main():
         mode=mode,
         user_ids=saved_val_ids,
         exclude_user_ids=on_grid_ids,
+        max_users=160
     )
     test_dataset = CsiPositionDataset(
         subthz_path=subthz_path,

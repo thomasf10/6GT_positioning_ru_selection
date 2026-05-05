@@ -89,7 +89,7 @@ class CsiPositionDataset(Dataset):
             available = sub10_users
 
         # --------------------------------------------------
-        # Either use explicit user_ids, or apply subset / max_users filters
+        # Either use explicit user_ids, or apply subset /
         # --------------------------------------------------
         if user_ids is not None:
             requested = [int(uid) for uid in user_ids]
@@ -122,11 +122,12 @@ class CsiPositionDataset(Dataset):
                     self.valid_users = [uid for uid in self.valid_users if uid not in on_grid_user_ids]
                 print(f"Filtered to {len(self.valid_users)} {subset} users.")
 
-            if max_users is not None and len(self.valid_users) > max_users:
-                rng = np.random.default_rng(seed)
-                picked = rng.choice(len(self.valid_users), size=max_users, replace=False)
-                self.valid_users = sorted(self.valid_users[i] for i in picked)
-                print(f"Capped to {len(self.valid_users)} users (max_users={max_users}, seed={seed}).")
+        # cap maximum number of users
+        if max_users is not None and len(self.valid_users) > max_users:
+            rng = np.random.default_rng(seed)
+            picked = rng.choice(len(self.valid_users), size=max_users, replace=False)
+            self.valid_users = sorted(self.valid_users[i] for i in picked)
+            print(f"Capped to {len(self.valid_users)} users (max_users={max_users}, seed={seed}).")
 
         # --------------------------------------------------
         # Optional explicit exclusion (e.g. keep train disjoint from val/test)
