@@ -87,47 +87,58 @@ class CsiPositionDataset(Dataset):
 
     def __getitem__(self, idx):
         user_id = self.valid_users[idx]
-        
+
         # Initialize data containers
         sub_10_channel = None
         sub_thz_channel = None
         position_label = None
-        
+
         if self.mode == 'subTHz' or self.mode == 'combined':
             """ load sub THz CSI """
             subthz_dir = os.path.join(self.subthz_path, f"channels_thz_ue_{user_id}.nc")
             ds = xr.load_dataset(subthz_dir)
-            
+
             # get subthz CSI of user
             sub_thz_channel = ds['channel'].values
-            
-            # get position label
+
+            # 2D position label (x, y only — z is constant for this dataset)
             x_label = ds.attrs['user_x']
             y_label = ds.attrs['user_y']
-            z_label = ds.attrs['user_z']
-            position_label = np.array([x_label, y_label, z_label], dtype=np.float32)
+            position_label = np.array([x_label, y_label], dtype=np.float32)
 
         if self.mode == 'sub10' or self.mode == 'combined':
             """ load sub 10 CSI """
             sub10_dir = os.path.join(self.sub10_path, f"channels_sub10ghz_ue_{user_id}.nc")
             ds_sub10 = xr.load_dataset(sub10_dir)
-            
+
             sub_10_channel = ds_sub10["channel"].values
-            
+
             # get position label (use sub10 dataset if not already set)
             if position_label is None:
                 x_label = ds_sub10.attrs['user_x']
                 y_label = ds_sub10.attrs['user_y']
-                z_label = ds_sub10.attrs['user_z']
-                position_label = np.array([x_label, y_label, z_label], dtype=np.float32)
+                position_label = np.array([x_label, y_label], dtype=np.float32)
 
-        # Always return the same structure: (data_dict, label, user_id)
+        # Convert complex CSI (real+imag) to float tensors with shape (..., 2),
+        # matching CsiDataset so the same Conv3D backbone can be used.
+        def channel_to_float_array(channel):
+            if channel is None:
+                return np.zeros((0,), dtype=np.float32)
+            if channel.dtype.names is not None and 'r' in channel.dtype.names and 'i' in channel.dtype.names:
+                channel = np.stack([channel['r'], channel['i']], axis=-1)
+            elif np.iscomplexobj(channel):
+                channel = np.stack([channel.real, channel.imag], axis=-1)
+            return channel.astype(np.float32)
+
+        sub_10_channel = channel_to_float_array(sub_10_channel)
+        sub_thz_channel = channel_to_float_array(sub_thz_channel)
+
         data = {
-            'sub10_channel': sub_10_channel,
-            'subthz_channel': sub_thz_channel
+            'sub10_channel': torch.from_numpy(sub_10_channel).float(),
+            'subthz_channel': torch.from_numpy(sub_thz_channel).float(),
         }
-        
-        return data, position_label, user_id
+
+        return data, torch.from_numpy(position_label), user_id
 
 """ Dataset for RU selection """
 class CsiDataset(Dataset):
