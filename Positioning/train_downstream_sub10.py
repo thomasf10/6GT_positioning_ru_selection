@@ -1,11 +1,10 @@
 """
-Training script for standalone 2D positioning from sub-10 GHz CSI.
+Downstream training script for 2D positioning from sub-10 GHz CSI.
 
-Single-head Conv3D model predicting the 2D position (x, y) of the UE.
-Same Conv3D backbone as `RU_selection/train_csi_ru_beam_sel.py`, with the
-three classification heads replaced by a single 2-output regression head.
-
-Uses the on-grid subset of `CsiPositionDataset` (UEs sitting under an RU).
+Same Conv3D backbone + 2D regression head as `train_standalone_sub10.py`,
+but the conv/proj/fc backbone is initialized from a checkpoint produced by
+`RU_selection/train_csi_ru_beam_sel.py` and then fine-tuned on the on-grid
+positioning dataset.
 """
 import json
 import sys
@@ -17,253 +16,73 @@ import yaml
 
 import matplotlib.pyplot as plt
 import matplot2tikz
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from tqdm import tqdm
 
-# Add parent directory to path to allow imports from dataset module
+# Add parent directory to path so `dataset` is importable
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dataset.dataloaders import CsiPositionDataset
+from train_standalone_sub10 import (
+    PositioningCSIConv3D,
+    prepare_csi_input,
+    train_epoch,
+    validate,
+    evaluate_position_cdf,
+)
 
 
 # ---------------------------------------------------------------------------
-# Preprocessing helpers (identical to RU/beam script)
+# Backbone transfer
 # ---------------------------------------------------------------------------
 
-def normalize_csi(sub10_csi):
-    """Normalize CSI per sample by dividing by the max absolute value."""
-    b = sub10_csi.shape[0]
-    max_val = sub10_csi.view(b, -1).abs().max(dim=1).values.clamp(min=1e-8)
-    return sub10_csi / max_val.view(b, 1, 1, 1, 1)
+BACKBONE_PREFIXES = ('conv.', 'proj.', 'fc.')
 
 
-def prepare_csi_input(sub10_channel):
-    """Reshape CSI tensor for Conv3D.
+def load_pretrained_backbone(model, ckpt_path, device):
+    """Copy the conv / proj / fc backbone tensors from an RU/beam-selection
+    checkpoint into `model`. The classification heads in the source checkpoint
+    are dropped; the position_head keeps its random initialization.
 
-    Input:  (batch, n_aps, ue_ants, ru_ants, subcarriers, 2)  -- real / imag
-    Output: (batch, n_aps, ue_ants, ru_ants, subcarriers * 2)
+    Errors out if any backbone tensor in `model` is not present in the source
+    state_dict — that signals an architecture mismatch.
     """
-    b, n_aps, ue, ru, sc, ri = sub10_channel.shape
-    return sub10_channel.reshape(b, n_aps, ue, ru, sc * ri)
+    ckpt = torch.load(ckpt_path, map_location=device)
+    src_state = ckpt['model_state_dict']
 
-
-# ---------------------------------------------------------------------------
-# Conv3D positioning model (same backbone, single regression head)
-# ---------------------------------------------------------------------------
-
-class PositioningCSIConv3D(nn.Module):
-    def __init__(
-        self,
-        num_aps,
-        out_dim=3,
-        conv_channels=16,
-        conv_layers=3,
-        proj_channels=16,
-        pooled_ue=2,
-        pooled_ru=2,
-        pooled_feat=4,
-        fc_size=256,
-        dropout=0.3,
-        kernel_ue=2,
-        kernel_ru=4,
-    ):
-        super().__init__()
-
-        in_channels = num_aps
-        layers = []
-        current_channels = in_channels
-        for layer_idx in range(conv_layers):
-            out_channels = conv_channels * (2 ** layer_idx)
-            stride_feat = 2 if layer_idx > 0 else 1
-            k = (kernel_ue, kernel_ru, 3)
-            p = (kernel_ue // 2, kernel_ru // 2, 1)
-            layers.append(
-                nn.Conv3d(
-                    current_channels,
-                    out_channels,
-                    kernel_size=k,
-                    stride=(1, 1, stride_feat),
-                    padding=p,
-                )
-            )
-            layers.append(nn.BatchNorm3d(out_channels))
-            layers.append(nn.ReLU())
-            current_channels = out_channels
-
-        self.conv = nn.Sequential(*layers)
-        self.proj = nn.Sequential(
-            nn.Conv3d(current_channels, proj_channels, kernel_size=1),
-            nn.ReLU(),
-        )
-        self.pre_fc_pool = nn.AdaptiveAvgPool3d((pooled_ue, pooled_ru, pooled_feat))
-
-        fc_input_dim = proj_channels * pooled_ue * pooled_ru * pooled_feat
-
-        self.fc = nn.Sequential(
-            nn.Linear(fc_input_dim, fc_size),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(fc_size, fc_size),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-        )
-
-        self.position_head = nn.Linear(fc_size, out_dim)
-
-    def forward(self, x):
-        x = self.conv(x)
-        x = self.proj(x)
-        x = self.pre_fc_pool(x)
-        x = x.flatten(start_dim=1)
-        x = self.fc(x)
-        return self.position_head(x)
-
-
-# ---------------------------------------------------------------------------
-# Training / validation loops
-# ---------------------------------------------------------------------------
-
-def _mean_euclidean_error(pred, target):
-    return torch.linalg.norm(pred - target, dim=1).mean().item()
-
-
-def train_epoch(model, train_loader, optimizer, device, criterion):
-    model.train()
-    sum_loss = 0.0
-    sum_err = 0.0
-    n_samples = 0
-
-    for data, position, _user_ids in tqdm(train_loader, desc='Train', leave=False):
-        sub10_csi = data['sub10_channel'].to(device)
-        sub10_csi = prepare_csi_input(sub10_csi)
-        sub10_csi = normalize_csi(sub10_csi)
-        position = position.to(device)
-
-        optimizer.zero_grad()
-        pred = model(sub10_csi)
-        loss = criterion(pred, position)
-        loss.backward()
-        optimizer.step()
-
-        bs = position.size(0)
-        sum_loss += loss.item() * bs
-        sum_err += _mean_euclidean_error(pred.detach(), position) * bs
-        n_samples += bs
-
-    return sum_loss / n_samples, sum_err / n_samples
-
-
-def validate(model, val_loader, device, criterion):
-    model.eval()
-    sum_loss = 0.0
-    sum_err = 0.0
-    n_samples = 0
-
-    with torch.no_grad():
-        for data, position, _user_ids in tqdm(val_loader, desc='Validate', leave=False):
-            sub10_csi = data['sub10_channel'].to(device)
-            sub10_csi = prepare_csi_input(sub10_csi)
-            sub10_csi = normalize_csi(sub10_csi)
-            position = position.to(device)
-
-            pred = model(sub10_csi)
-            loss = criterion(pred, position)
-
-            bs = position.size(0)
-            sum_loss += loss.item() * bs
-            sum_err += _mean_euclidean_error(pred, position) * bs
-            n_samples += bs
-
-    return sum_loss / n_samples, sum_err / n_samples
-
-
-# ---------------------------------------------------------------------------
-# Test-set evaluation: CDF of per-sample positioning error (in metres)
-# ---------------------------------------------------------------------------
-
-def evaluate_position_cdf(model, test_loader, device, save_dir, title='Test positioning error CDF'):
-    """Run inference on the test set, compute the per-sample Euclidean error
-    (in metres), and save the empirical CDF (PNG, TikZ, raw CSV).
-
-    Returns a dict with the raw errors and key percentiles.
-    """
-    model.eval()
-    errors = []
-    with torch.no_grad():
-        for data, position, _user_ids in tqdm(test_loader, desc='CDF eval', leave=False):
-            sub10_csi = data['sub10_channel'].to(device)
-            sub10_csi = prepare_csi_input(sub10_csi)
-            sub10_csi = normalize_csi(sub10_csi)
-            position = position.to(device)
-
-            pred = model(sub10_csi)
-            err = torch.linalg.norm(pred - position, dim=1).cpu().numpy()
-            errors.append(err)
-
-    errors = np.concatenate(errors) if errors else np.zeros((0,), dtype=np.float32)
-    if errors.size == 0:
-        raise ValueError('Test loader produced no samples; cannot build CDF.')
-
-    errors_sorted = np.sort(errors)
-    cdf = np.arange(1, len(errors_sorted) + 1) / len(errors_sorted)
-
-    p50, p90, p95, p99 = np.percentile(errors, [50, 90, 95, 99])
-    mean = float(errors.mean())
-    rmse = float(np.sqrt((errors ** 2).mean()))
-    print(
-        f'Test positioning error (m): '
-        f'mean={mean:.3f}  rmse={rmse:.3f}  '
-        f'p50={p50:.3f}  p90={p90:.3f}  p95={p95:.3f}  p99={p99:.3f}'
-    )
-
-    save_dir = Path(save_dir)
-    csv_path = save_dir / 'test_pos_error_cdf.csv'
-    np.savetxt(
-        csv_path,
-        np.column_stack([errors_sorted, cdf]),
-        delimiter=',',
-        header='error_m,cdf',
-        comments='',
-    )
-
-    fig, ax = plt.subplots(figsize=(7, 5))
-    ax.plot(errors_sorted, cdf,
-            label=f'mean={mean:.2f} m, p90={p90:.2f} m, p95={p95:.2f} m')
-    for p_val in (p50, p90, p95):
-        ax.axvline(p_val, color='grey', linestyle=':', linewidth=0.8)
-    ax.set_xlabel('Position error (m)')
-    ax.set_ylabel('CDF')
-    ax.set_ylim(0, 1)
-    ax.set_xlim(left=0)
-    ax.set_title(title)
-    ax.grid(True)
-    ax.legend(loc='lower right')
-
-    plot_path = save_dir / 'test_pos_error_cdf.png'
-    plt.savefig(plot_path, dpi=150, bbox_inches='tight')
-    tikz_code = matplot2tikz.get_tikz_code(float_format='.4g')
-    tikz_path = save_dir / 'test_pos_error_cdf.tex'
-    with open(tikz_path, 'w', encoding='utf-8') as f:
-        f.write(tikz_code)
-    plt.close(fig)
-    print(f'Test CDF saved to: {plot_path}')
-    print(f'TikZ saved to:     {tikz_path}')
-    print(f'Raw CSV saved to:  {csv_path}')
-
-    return {
-        'errors_m': errors,
-        'mean_m': mean,
-        'rmse_m': rmse,
-        'p50_m': float(p50),
-        'p90_m': float(p90),
-        'p95_m': float(p95),
-        'p99_m': float(p99),
+    backbone_state = {
+        k: v for k, v in src_state.items() if k.startswith(BACKBONE_PREFIXES)
     }
+    expected_backbone_keys = {
+        k for k in model.state_dict() if k.startswith(BACKBONE_PREFIXES)
+    }
+    missing_backbone = expected_backbone_keys - set(backbone_state.keys())
+    if missing_backbone:
+        raise RuntimeError(
+            f"Pretrained checkpoint is missing {len(missing_backbone)} backbone "
+            f"tensors expected by the positioning model "
+            f"(architecture mismatch). Examples: {sorted(missing_backbone)[:5]}"
+        )
+
+    missing, unexpected = model.load_state_dict(backbone_state, strict=False)
+    # `missing` should now contain only the position_head keys.
+    print(f'Loaded {len(backbone_state)} backbone tensors from {ckpt_path}')
+    print(f'  randomly-initialized (head): {sorted(missing)}')
+    if unexpected:
+        print(f'  unexpected keys ignored: {len(unexpected)}')
+    return ckpt
+
+
+def freeze_backbone_params(model):
+    n_frozen = 0
+    for name, param in model.named_parameters():
+        if name.startswith(BACKBONE_PREFIXES):
+            param.requires_grad = False
+            n_frozen += param.numel()
+    print(f'Backbone frozen: {n_frozen:,} parameters held fixed.')
 
 
 # ---------------------------------------------------------------------------
@@ -277,36 +96,54 @@ def main():
     subthz_path = f'../dataset/{dataset_folder}/sub_thz_channels'
     labels_path = f'../dataset/{dataset_folder}/ru_selection_labels/results.csv'
 
+    # Pretrained RU/beam-selection checkpoint to seed the backbone with.
+    # Point this at the best_model.pt of the RU run you want to fine-tune from.
+    pretrained_ckpt_path = Path(
+        '../RU_selection/stored_models_ru_beam_sel/<run_name>/best_model.pt'
+    )
+    # Reuse the val/test split saved by that same RU run for direct comparability.
+    ru_split_path = Path(
+        '../RU_selection/stored_models_ru_beam_sel/<run_name>/split_user_ids.json'
+    )
+
     # --- Training config ---
     mode = 'sub10'
     batch_size = 32
     epochs = 1
-    lr = 3e-4
-
-    # Reuse the val/test split written by `RU_selection/train_csi_ru_beam_sel.py`
-    # so this script evaluates on exactly the same UEs. Set this to the
-    # split_user_ids.json of the RU run you want to align with.
-    ru_split_path = Path('../RU_selection/stored_models_ru_beam_sel/<run_name>/split_user_ids.json')
-
-    # --- Model config ---
-    conv_channels = 16
-    conv_layers = 3
-    proj_channels = 16
-    pooled_ue = 2
-    pooled_ru = 2
-    pooled_feat = 4
-    fc_size = 256
-    dropout = 0.3
+    lr = 1e-4                # smaller than from-scratch — typical for fine-tuning
+    freeze_backbone = False  # if True, train only the position head
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    # --- Load pretrained config so the new model matches the saved weights ---
+    if not pretrained_ckpt_path.exists():
+        raise FileNotFoundError(
+            f"Pretrained checkpoint not found at {pretrained_ckpt_path}. "
+            f"Run RU_selection/train_csi_ru_beam_sel.py first."
+        )
+    pretrained_blob = torch.load(pretrained_ckpt_path, map_location='cpu')
+    pretrained_config = pretrained_blob['config']
+
+    conv_channels = pretrained_config['conv_channels']
+    conv_layers = pretrained_config['conv_layers']
+    proj_channels = pretrained_config['proj_channels']
+    pooled_ue = pretrained_config['pooled_ue']
+    pooled_ru = pretrained_config['pooled_ru']
+    pooled_feat = pretrained_config['pooled_feat']
+    fc_size = pretrained_config['fc_size']
+    dropout = pretrained_config['dropout']
+    kernel_ue_ckpt = pretrained_config['kernel_ue']
+    kernel_ru_ckpt = pretrained_config['kernel_ru']
+
     timestamp = datetime.now().strftime('%m%d_%H%M')
     run_name = (
-        f'csi_conv3d_pos'
+        f'csi_conv3d_pos_ft'
         f'_ep{epochs}_bs{batch_size}_lr{lr:.0e}'
         f'_cc{conv_channels}_cl{conv_layers}_fc{fc_size}_do{dropout}'
+        f'_frz{int(freeze_backbone)}'
         f'_{timestamp}'
     )
-    run_dir = Path('stored_models_positioning_sub10') / run_name
+    run_dir = Path('stored_models_positioning_sub10_finetuned') / run_name
     run_dir.mkdir(parents=True, exist_ok=True)
 
     print(f'Using device: {device}')
@@ -315,9 +152,9 @@ def main():
     # --- Load val/test user_ids from the RU/beam-selection split ---
     if not ru_split_path.exists():
         raise FileNotFoundError(
-            f"RU split file not found at {ru_split_path}. Run "
-            f"RU_selection/train_csi_ru_beam_sel.py first; it writes "
-            f"split_user_ids.json into its run_dir."
+            f"RU split file not found at {ru_split_path}. The RU run that "
+            f"produced the pretrained checkpoint should also have written "
+            f"split_user_ids.json next to best_model.pt."
         )
     with open(ru_split_path) as f:
         ru_split = json.load(f)
@@ -335,8 +172,8 @@ def main():
         subset='on_grid',
     )
 
-    # Val/test: the saved RU val/test lists, but with on-grid UEs removed
-    # (prevents on-grid UEs from leaking out of the training set into val/test).
+    # Val/test: the saved RU val/test lists, with on-grid UEs removed
+    # (prevents on-grid UEs from leaking out of training into val/test).
     on_grid_ids = set(train_dataset.valid_users)
     val_dataset = CsiPositionDataset(
         subthz_path=subthz_path,
@@ -356,11 +193,10 @@ def main():
     )
 
     if len(train_dataset) < 1:
-        raise ValueError('Train (on-grid, minus held-out) set is empty.')
+        raise ValueError('Train (on-grid) set is empty.')
     if len(val_dataset) < 1 or len(test_dataset) < 1:
         raise ValueError('Val or test set is empty after applying RU split.')
 
-    # Hard guarantee that train is disjoint from val/test.
     train_ids = set(train_dataset.valid_users)
     val_ids = set(val_dataset.valid_users)
     test_ids = set(test_dataset.valid_users)
@@ -382,6 +218,17 @@ def main():
     num_aps = csi_raw.shape[0]
     num_ue_ants = csi_raw.shape[1]
     num_ru_ants = csi_raw.shape[2]
+
+    # The conv kernels are sized to (kernel_ue, kernel_ru, 3) at construction
+    # time. If the pretrained kernels don't match the current data antenna
+    # counts, the loaded conv weights would have a different shape and the
+    # transfer would silently fail / error. Catch this up front.
+    if (kernel_ue_ckpt, kernel_ru_ckpt) != (num_ue_ants, num_ru_ants):
+        raise RuntimeError(
+            f"Antenna mismatch between pretrained checkpoint and current data: "
+            f"ckpt kernel=(ue={kernel_ue_ckpt}, ru={kernel_ru_ckpt}) vs "
+            f"data=(ue={num_ue_ants}, ru={num_ru_ants})."
+        )
 
     print('Dataset summary:')
     print(f'  dataset_folder           = {dataset_folder}')
@@ -409,15 +256,22 @@ def main():
         kernel_ru=num_ru_ants,
     ).to(device)
 
-    num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    load_pretrained_backbone(model, pretrained_ckpt_path, device)
+    if freeze_backbone:
+        freeze_backbone_params(model)
+
+    num_params_total = sum(p.numel() for p in model.parameters())
+    num_params_trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print('\nModel & training summary:')
     print(f'  run_name                 = {run_name}')
+    print(f'  pretrained_ckpt          = {pretrained_ckpt_path}')
+    print(f'  freeze_backbone          = {freeze_backbone}')
     print(f'  -- Training --')
     print(f'  epochs                   = {epochs}')
     print(f'  batch_size               = {batch_size}')
     print(f'  lr                       = {lr}')
     print(f'  loss                     = MSE on (x, y)')
-    print(f'  -- Architecture --')
+    print(f'  -- Architecture (from pretrained config) --')
     print(f'  conv_channels            = {conv_channels}')
     print(f'  conv_layers              = {conv_layers}')
     print(f'  kernel_size              = ({num_ue_ants}, {num_ru_ants}, 3)')
@@ -427,10 +281,16 @@ def main():
     print(f'  pooled_feat              = {pooled_feat}')
     print(f'  fc_size                  = {fc_size}')
     print(f'  dropout                  = {dropout}')
-    print(f'  trainable parameters     = {num_params:,}')
+    print(f'  total parameters         = {num_params_total:,}')
+    print(f'  trainable parameters     = {num_params_trainable:,}')
 
     run_params = {
         'run_name': run_name,
+        'pretrained': {
+            'ckpt_path': str(pretrained_ckpt_path),
+            'freeze_backbone': freeze_backbone,
+            'src_config': pretrained_config,
+        },
         'dataset': {
             'dataset_folder': dataset_folder,
             'mode': mode,
@@ -463,7 +323,8 @@ def main():
             'pooled_feat': pooled_feat,
             'fc_size': fc_size,
             'dropout': dropout,
-            'trainable_parameters': num_params,
+            'total_parameters': num_params_total,
+            'trainable_parameters': num_params_trainable,
         },
         'device': str(device),
     }
@@ -472,7 +333,11 @@ def main():
         yaml.dump(run_params, f, default_flow_style=False, sort_keys=False)
     print(f'\nRun parameters saved to {params_path}')
 
-    optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
+    optimizer = optim.AdamW(
+        [p for p in model.parameters() if p.requires_grad],
+        lr=lr,
+        weight_decay=1e-4,
+    )
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10)
 
     writer = SummaryWriter(str(run_dir / 'logs'))
@@ -482,7 +347,7 @@ def main():
     train_errs, val_errs = [], []
     best_val_loss = float('inf')
 
-    print('\nStarting training...\n')
+    print('\nStarting fine-tuning...\n')
     for epoch in range(epochs):
         t0 = time.perf_counter()
 
@@ -514,6 +379,8 @@ def main():
                 'optimizer_state_dict': optimizer.state_dict(),
                 'val_loss': vl_loss,
                 'val_pos_err_m': vl_err,
+                'pretrained_ckpt': str(pretrained_ckpt_path),
+                'freeze_backbone': freeze_backbone,
                 'config': {
                     'mode': mode,
                     'batch_size': batch_size,
@@ -539,7 +406,7 @@ def main():
     model.load_state_dict(ckpt['model_state_dict'])
     test_loss, test_err = validate(model, test_loader, device, criterion)
 
-    print('\nTraining finished')
+    print('\nFine-tuning finished')
     print(f'Best val loss:       {best_val_loss:.4f}')
     print(f'Test loss:           {test_loss:.4f}')
     print(f'Test pos error:      {test_err:.3f} m')
@@ -548,7 +415,7 @@ def main():
     # --- CDF of per-sample positioning error on the test set ---
     evaluate_position_cdf(
         model, test_loader, device, run_dir,
-        title='Standalone sub-10 GHz: test positioning error CDF',
+        title='Downstream (fine-tuned) sub-10 GHz: test positioning error CDF',
     )
 
     # --- Training plots ---
@@ -558,7 +425,7 @@ def main():
     axes[0].plot(val_losses, label='Val Loss')
     axes[0].set_xlabel('Epoch')
     axes[0].set_ylabel('MSE Loss')
-    axes[0].set_title('Loss Curves')
+    axes[0].set_title('Loss Curves (fine-tuning)')
     axes[0].grid(True)
     axes[0].legend()
 
@@ -566,7 +433,7 @@ def main():
     axes[1].plot(val_errs, label='Val Pos Error')
     axes[1].set_xlabel('Epoch')
     axes[1].set_ylabel('Mean Euclidean Error (m)')
-    axes[1].set_title('Positioning Error')
+    axes[1].set_title('Positioning Error (fine-tuning)')
     axes[1].grid(True)
     axes[1].legend()
 
