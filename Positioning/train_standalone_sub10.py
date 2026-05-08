@@ -281,9 +281,9 @@ def main():
 
     # --- Training config ---
     mode = 'sub10'
-    batch_size = 32
-    epochs = 1
-    lr = 3e-4
+    batch_size = 8
+    epochs = 150
+    lr = 1e-3
 
     # Reuse the val/test split written by `RU_selection/train_csi_ru_beam_sel.py`
     # so this script evaluates on exactly the same UEs. Set this to the
@@ -347,6 +347,7 @@ def main():
         mode=mode,
         user_ids=saved_val_ids,
         exclude_user_ids=on_grid_ids,
+        max_users=160
     )
     test_dataset = CsiPositionDataset(
         subthz_path=subthz_path,

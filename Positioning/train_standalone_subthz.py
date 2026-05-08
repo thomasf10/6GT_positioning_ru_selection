@@ -51,15 +51,14 @@ def main():
 
     # --- Training config ---
     mode = 'subTHz'
-    batch_size = 32
-    epochs = 1
-    lr = 3e-4
+    batch_size = 8
+    epochs = 150
+    lr = 1e-3
 
     # Reuse the val/test split written by `RU_selection/train_csi_ru_beam_sel.py`
     # so this script evaluates on exactly the same UEs as the sub-10 variant.
-    ru_split_path = Path(
-        '../RU_selection/stored_models_ru_beam_sel/<run_name>/split_user_ids.json'
-    )
+    ru_split_path = Path('../RU_selection/stored_models_ru_beam_sel/csi_conv3d_ru_beam_ep1_bs32_lr3e-04_cc16_cl3_fc256_do0.3_0505_1135/split_user_ids.json')
+
 
     # --- Model config ---
     conv_channels = 16
@@ -118,6 +117,7 @@ def main():
         mode=mode,
         user_ids=saved_val_ids,
         exclude_user_ids=on_grid_ids,
+        max_users=160
     )
     test_dataset = CsiPositionDataset(
         subthz_path=subthz_path,
