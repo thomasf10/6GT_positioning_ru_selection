@@ -1,11 +1,14 @@
 """
-Training script for standalone 2D positioning from sub-10 GHz CSI.
+Training script for standalone 2D positioning from sub-THz CSI.
 
-Single-head Conv3D model predicting the 2D position (x, y) of the UE.
-Same Conv3D backbone as `RU_selection/train_csi_ru_beam_sel.py`, with the
-three classification heads replaced by a single 2-output regression head.
+Mirrors `train_standalone_sub10.py` exactly — same Conv3D backbone, same
+2D regression head, same on-grid / saved-RU-split data setup — but reads
+the `subthz_channel` from `CsiPositionDataset` and uses `mode='subTHz'`.
 
-Uses the on-grid subset of `CsiPositionDataset` (UEs sitting under an RU).
+Compared to the sub-10 variant, the input tensor's first dimension is the
+number of sub-THz RUs that send pilots (rather than the number of sub-10 APs);
+otherwise the (ue_ants, ru_ants, subcarriers) layout is identical, so the
+same backbone applies.
 """
 import json
 import sys
@@ -17,260 +20,27 @@ import yaml
 
 import matplotlib.pyplot as plt
 import matplot2tikz
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from tqdm import tqdm
 
-# Add parent directory to path to allow imports from dataset module
+# Add parent directory to path so `dataset` is importable
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from dataset.dataloaders import CsiPositionDataset
+from train_standalone_sub10 import (
+    PositioningCSIConv3D,
+    prepare_csi_input,
+    train_epoch,
+    validate,
+    evaluate_position_cdf,
+)
 
 
-# ---------------------------------------------------------------------------
-# Preprocessing helpers (identical to RU/beam script)
-# ---------------------------------------------------------------------------
+CSI_KEY = 'subthz_channel'
 
-def normalize_csi(sub10_csi):
-    """Normalize CSI per sample by dividing by the max absolute value."""
-    b = sub10_csi.shape[0]
-    max_val = sub10_csi.view(b, -1).abs().max(dim=1).values.clamp(min=1e-8)
-    return sub10_csi / max_val.view(b, 1, 1, 1, 1)
-
-
-def prepare_csi_input(sub10_channel):
-    """Reshape CSI tensor for Conv3D.
-
-    Input:  (batch, n_aps, ue_ants, ru_ants, subcarriers, 2)  -- real / imag
-    Output: (batch, n_aps, ue_ants, ru_ants, subcarriers * 2)
-    """
-    b, n_aps, ue, ru, sc, ri = sub10_channel.shape
-    return sub10_channel.reshape(b, n_aps, ue, ru, sc * ri)
-
-
-# ---------------------------------------------------------------------------
-# Conv3D positioning model (same backbone, single regression head)
-# ---------------------------------------------------------------------------
-
-class PositioningCSIConv3D(nn.Module):
-    def __init__(
-        self,
-        num_aps,
-        out_dim=3,
-        conv_channels=16,
-        conv_layers=3,
-        proj_channels=16,
-        pooled_ue=2,
-        pooled_ru=2,
-        pooled_feat=4,
-        fc_size=256,
-        dropout=0.3,
-        kernel_ue=2,
-        kernel_ru=4,
-    ):
-        super().__init__()
-
-        in_channels = num_aps
-        layers = []
-        current_channels = in_channels
-        for layer_idx in range(conv_layers):
-            out_channels = conv_channels * (2 ** layer_idx)
-            stride_feat = 2 if layer_idx > 0 else 1
-            k = (kernel_ue, kernel_ru, 3)
-            p = (kernel_ue // 2, kernel_ru // 2, 1)
-            layers.append(
-                nn.Conv3d(
-                    current_channels,
-                    out_channels,
-                    kernel_size=k,
-                    stride=(1, 1, stride_feat),
-                    padding=p,
-                )
-            )
-            layers.append(nn.BatchNorm3d(out_channels))
-            layers.append(nn.ReLU())
-            current_channels = out_channels
-
-        self.conv = nn.Sequential(*layers)
-        self.proj = nn.Sequential(
-            nn.Conv3d(current_channels, proj_channels, kernel_size=1),
-            nn.ReLU(),
-        )
-        self.pre_fc_pool = nn.AdaptiveAvgPool3d((pooled_ue, pooled_ru, pooled_feat))
-
-        fc_input_dim = proj_channels * pooled_ue * pooled_ru * pooled_feat
-
-        self.fc = nn.Sequential(
-            nn.Linear(fc_input_dim, fc_size),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(fc_size, fc_size),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-        )
-
-        self.position_head = nn.Linear(fc_size, out_dim)
-
-    def forward(self, x):
-        x = self.conv(x)
-        x = self.proj(x)
-        x = self.pre_fc_pool(x)
-        x = x.flatten(start_dim=1)
-        x = self.fc(x)
-        return self.position_head(x)
-
-
-# ---------------------------------------------------------------------------
-# Training / validation loops
-# ---------------------------------------------------------------------------
-
-def _mean_euclidean_error(pred, target):
-    return torch.linalg.norm(pred - target, dim=1).mean().item()
-
-
-def train_epoch(model, train_loader, optimizer, device, criterion, csi_key='sub10_channel'):
-    model.train()
-    sum_loss = 0.0
-    sum_err = 0.0
-    n_samples = 0
-
-    for data, position, _user_ids in tqdm(train_loader, desc='Train', leave=False):
-        csi = data[csi_key].to(device)
-        csi = prepare_csi_input(csi)
-        csi = normalize_csi(csi)
-        position = position.to(device)
-
-        optimizer.zero_grad()
-        pred = model(csi)
-        loss = criterion(pred, position)
-        loss.backward()
-        optimizer.step()
-
-        bs = position.size(0)
-        sum_loss += loss.item() * bs
-        sum_err += _mean_euclidean_error(pred.detach(), position) * bs
-        n_samples += bs
-
-    return sum_loss / n_samples, sum_err / n_samples
-
-
-def validate(model, val_loader, device, criterion, csi_key='sub10_channel'):
-    model.eval()
-    sum_loss = 0.0
-    sum_err = 0.0
-    n_samples = 0
-
-    with torch.no_grad():
-        for data, position, _user_ids in tqdm(val_loader, desc='Validate', leave=False):
-            csi = data[csi_key].to(device)
-            csi = prepare_csi_input(csi)
-            csi = normalize_csi(csi)
-            position = position.to(device)
-
-            pred = model(csi)
-            loss = criterion(pred, position)
-
-            bs = position.size(0)
-            sum_loss += loss.item() * bs
-            sum_err += _mean_euclidean_error(pred, position) * bs
-            n_samples += bs
-
-    return sum_loss / n_samples, sum_err / n_samples
-
-
-# ---------------------------------------------------------------------------
-# Test-set evaluation: CDF of per-sample positioning error (in metres)
-# ---------------------------------------------------------------------------
-
-def evaluate_position_cdf(model, test_loader, device, save_dir,
-                          title='Test positioning error CDF',
-                          csi_key='sub10_channel'):
-    """Run inference on the test set, compute the per-sample Euclidean error
-    (in metres), and save the empirical CDF (PNG, TikZ, raw CSV).
-
-    Returns a dict with the raw errors and key percentiles.
-    """
-    model.eval()
-    errors = []
-    with torch.no_grad():
-        for data, position, _user_ids in tqdm(test_loader, desc='CDF eval', leave=False):
-            csi = data[csi_key].to(device)
-            csi = prepare_csi_input(csi)
-            csi = normalize_csi(csi)
-            position = position.to(device)
-
-            pred = model(csi)
-            err = torch.linalg.norm(pred - position, dim=1).cpu().numpy()
-            errors.append(err)
-
-    errors = np.concatenate(errors) if errors else np.zeros((0,), dtype=np.float32)
-    if errors.size == 0:
-        raise ValueError('Test loader produced no samples; cannot build CDF.')
-
-    errors_sorted = np.sort(errors)
-    cdf = np.arange(1, len(errors_sorted) + 1) / len(errors_sorted)
-
-    p50, p90, p95, p99 = np.percentile(errors, [50, 90, 95, 99])
-    mean = float(errors.mean())
-    rmse = float(np.sqrt((errors ** 2).mean()))
-    print(
-        f'Test positioning error (m): '
-        f'mean={mean:.3f}  rmse={rmse:.3f}  '
-        f'p50={p50:.3f}  p90={p90:.3f}  p95={p95:.3f}  p99={p99:.3f}'
-    )
-
-    save_dir = Path(save_dir)
-    csv_path = save_dir / 'test_pos_error_cdf.csv'
-    np.savetxt(
-        csv_path,
-        np.column_stack([errors_sorted, cdf]),
-        delimiter=',',
-        header='error_m,cdf',
-        comments='',
-    )
-
-    fig, ax = plt.subplots(figsize=(7, 5))
-    ax.plot(errors_sorted, cdf,
-            label=f'mean={mean:.2f} m, p90={p90:.2f} m, p95={p95:.2f} m')
-    for p_val in (p50, p90, p95):
-        ax.axvline(p_val, color='grey', linestyle=':', linewidth=0.8)
-    ax.set_xlabel('Position error (m)')
-    ax.set_ylabel('CDF')
-    ax.set_ylim(0, 1)
-    ax.set_xlim(left=0)
-    ax.set_title(title)
-    ax.grid(True)
-    ax.legend(loc='lower right')
-
-    plot_path = save_dir / 'test_pos_error_cdf.png'
-    plt.savefig(plot_path, dpi=150, bbox_inches='tight')
-    tikz_code = matplot2tikz.get_tikz_code(float_format='.4g')
-    tikz_path = save_dir / 'test_pos_error_cdf.tex'
-    with open(tikz_path, 'w', encoding='utf-8') as f:
-        f.write(tikz_code)
-    plt.close(fig)
-    print(f'Test CDF saved to: {plot_path}')
-    print(f'TikZ saved to:     {tikz_path}')
-    print(f'Raw CSV saved to:  {csv_path}')
-
-    return {
-        'errors_m': errors,
-        'mean_m': mean,
-        'rmse_m': rmse,
-        'p50_m': float(p50),
-        'p90_m': float(p90),
-        'p95_m': float(p95),
-        'p99_m': float(p99),
-    }
-
-
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
 
 def main():
     # --- Paths ---
@@ -280,15 +50,16 @@ def main():
     labels_path = f'../dataset/{dataset_folder}/ru_selection_labels/results.csv'
 
     # --- Training config ---
-    mode = 'sub10'
+    mode = 'subTHz'
     batch_size = 32
     epochs = 1
     lr = 3e-4
 
     # Reuse the val/test split written by `RU_selection/train_csi_ru_beam_sel.py`
-    # so this script evaluates on exactly the same UEs. Set this to the
-    # split_user_ids.json of the RU run you want to align with.
-    ru_split_path = Path('../RU_selection/stored_models_ru_beam_sel/csi_conv3d_ru_beam_ep1_bs32_lr3e-04_cc16_cl3_fc256_do0.3_0505_1135/split_user_ids.json')
+    # so this script evaluates on exactly the same UEs as the sub-10 variant.
+    ru_split_path = Path(
+        '../RU_selection/stored_models_ru_beam_sel/<run_name>/split_user_ids.json'
+    )
 
     # --- Model config ---
     conv_channels = 16
@@ -303,12 +74,12 @@ def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     timestamp = datetime.now().strftime('%m%d_%H%M')
     run_name = (
-        f'csi_conv3d_pos'
+        f'csi_conv3d_pos_subthz'
         f'_ep{epochs}_bs{batch_size}_lr{lr:.0e}'
         f'_cc{conv_channels}_cl{conv_layers}_fc{fc_size}_do{dropout}'
         f'_{timestamp}'
     )
-    run_dir = Path('stored_models_positioning_sub10') / run_name
+    run_dir = Path('stored_models_positioning_subthz') / run_name
     run_dir.mkdir(parents=True, exist_ok=True)
 
     print(f'Using device: {device}')
@@ -337,8 +108,8 @@ def main():
         subset='on_grid',
     )
 
-    # Val/test: the saved RU val/test lists, but with on-grid UEs removed
-    # (prevents on-grid UEs from leaking out of the training set into val/test).
+    # Val/test: the saved RU val/test lists, with on-grid UEs removed
+    # (prevents on-grid UEs from leaking out of training into val/test).
     on_grid_ids = set(train_dataset.valid_users)
     val_dataset = CsiPositionDataset(
         subthz_path=subthz_path,
@@ -358,7 +129,7 @@ def main():
     )
 
     if len(train_dataset) < 1:
-        raise ValueError('Train (on-grid, minus held-out) set is empty.')
+        raise ValueError('Train (on-grid) set is empty.')
     if len(val_dataset) < 1 or len(test_dataset) < 1:
         raise ValueError('Val or test set is empty after applying RU split.')
 
@@ -378,26 +149,30 @@ def main():
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
 
+    # subthz_channel raw shape: (n_rus, ue_ants, ru_ants, subcarriers, 2)
     sample_data, _sample_label, _ = train_dataset[0]
-    csi_raw = sample_data['sub10_channel']  # (n_aps, ue, ru, sc, 2)
+    csi_raw = sample_data[CSI_KEY]
     csi_prepared = prepare_csi_input(csi_raw.unsqueeze(0)).squeeze(0)
-    num_aps = csi_raw.shape[0]
+    num_rus = csi_raw.shape[0]
     num_ue_ants = csi_raw.shape[1]
     num_ru_ants = csi_raw.shape[2]
 
     print('Dataset summary:')
-    print(f'  dataset_folder           = {dataset_folder}')
-    print(f'  train subset             = on_grid')
-    print(f'  val/test                 = loaded from {ru_split_path} (on-grid UEs removed)')
-    print(f'  sub10_channel raw shape  = {tuple(csi_raw.shape)}')
-    print(f'  sub10_channel conv input = {tuple(csi_prepared.shape)}')
-    print(f'  num_aps                  = {num_aps}')
-    print(f'  train/val/test sizes     = {len(train_dataset)} / {len(val_dataset)} / {len(test_dataset)}')
+    print(f'  dataset_folder            = {dataset_folder}')
+    print(f'  train subset              = on_grid')
+    print(f'  val/test                  = loaded from {ru_split_path} (on-grid UEs removed)')
+    print(f'  subthz_channel raw shape  = {tuple(csi_raw.shape)}')
+    print(f'  subthz_channel conv input = {tuple(csi_prepared.shape)}')
+    print(f'  num_rus                   = {num_rus}')
+    print(f'  train/val/test sizes      = {len(train_dataset)} / {len(val_dataset)} / {len(test_dataset)}')
 
     criterion = nn.MSELoss()
 
+    # The Conv3D's `num_aps` argument is just the number of input channels of
+    # the first Conv3d layer, which here corresponds to the number of sub-THz
+    # RUs sending pilots.
     model = PositioningCSIConv3D(
-        num_aps=num_aps,
+        num_aps=num_rus,
         out_dim=2,
         conv_channels=conv_channels,
         conv_layers=conv_layers,
@@ -436,6 +211,7 @@ def main():
         'dataset': {
             'dataset_folder': dataset_folder,
             'mode': mode,
+            'csi_key': CSI_KEY,
             'train_subset': 'on_grid',
             'ru_split_path': str(ru_split_path),
             'ru_split_seed': ru_split.get('seed'),
@@ -454,7 +230,7 @@ def main():
             'scheduler_patience': 10,
         },
         'architecture': {
-            'num_aps': num_aps,
+            'num_rus': num_rus,
             'out_dim': 2,
             'conv_channels': conv_channels,
             'conv_layers': conv_layers,
@@ -488,8 +264,12 @@ def main():
     for epoch in range(epochs):
         t0 = time.perf_counter()
 
-        tr_loss, tr_err = train_epoch(model, train_loader, optimizer, device, criterion)
-        vl_loss, vl_err = validate(model, val_loader, device, criterion)
+        tr_loss, tr_err = train_epoch(
+            model, train_loader, optimizer, device, criterion, csi_key=CSI_KEY,
+        )
+        vl_loss, vl_err = validate(
+            model, val_loader, device, criterion, csi_key=CSI_KEY,
+        )
         scheduler.step(vl_loss)
 
         writer.add_scalar('Loss/train', tr_loss, epoch)
@@ -518,6 +298,7 @@ def main():
                 'val_pos_err_m': vl_err,
                 'config': {
                     'mode': mode,
+                    'csi_key': CSI_KEY,
                     'batch_size': batch_size,
                     'epochs': epochs,
                     'lr': lr,
@@ -539,7 +320,7 @@ def main():
     # --- Test evaluation ---
     ckpt = torch.load(best_ckpt_path, map_location=device)
     model.load_state_dict(ckpt['model_state_dict'])
-    test_loss, test_err = validate(model, test_loader, device, criterion)
+    test_loss, test_err = validate(model, test_loader, device, criterion, csi_key=CSI_KEY)
 
     print('\nTraining finished')
     print(f'Best val loss:       {best_val_loss:.4f}')
@@ -550,7 +331,8 @@ def main():
     # --- CDF of per-sample positioning error on the test set ---
     evaluate_position_cdf(
         model, test_loader, device, run_dir,
-        title='Standalone sub-10 GHz: test positioning error CDF',
+        title='Standalone sub-THz: test positioning error CDF',
+        csi_key=CSI_KEY,
     )
 
     # --- Training plots ---
