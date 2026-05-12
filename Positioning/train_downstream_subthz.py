@@ -56,14 +56,22 @@ def main():
     # Pretrained sub-THz RU/beam-selection checkpoint to seed the backbone with.
     # Point this at the best_model.pt of the sub-THz RU run you want to
     # fine-tune from (i.e. one written by RU_selection/train_subthz_csi_ru_beam_sel.py).
+    # pretrained_ckpt_path = Path(
+    #     '../RU_selection/stored_models_subTHz_input/csi_conv3d_ep20_bs32_lr3e-04_cc16_cl3_fc256_do0.3_fixed_beams_0414_1400/best_model.pt'
+    # )
+
+    # optimized beams backbone
     pretrained_ckpt_path = Path(
-        '../RU_selection/stored_models_subTHz_input_ru_beam_sel/<run_name>/best_model.pt'
+        '../RU_selection/stored_models_subTHz_input_ru_beam_sel/csi_conv3d_ru_beam_ep20_bs32_lr3e-04_cc16_cl3_fc256_do0.3_0415_1018/best_model.pt'
     )
+
+
+
+
     # Reuse the val/test split saved by an RU run for direct comparability with
     # the standalone runs.
-    ru_split_path = Path(
-        '../RU_selection/stored_models_ru_beam_sel/<run_name>/split_user_ids.json'
-    )
+    ru_split_path = Path('../RU_selection/stored_models_ru_beam_sel/csi_conv3d_ru_beam_ep1_bs32_lr3e-04_cc16_cl3_fc256_do0.3_0505_1135/split_user_ids.json')
+
 
     # --- Training config ---
     mode = 'subTHz'

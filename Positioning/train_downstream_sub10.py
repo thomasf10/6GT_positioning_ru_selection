@@ -104,6 +104,7 @@ def main():
     pretrained_ckpt_path = Path(
         '../RU_selection/stored_models\csi_conv3d_ep20_bs32_lr3e-04_cc16_cl3_fc256_do0.3_fixed_beams_0408_1024/best_model.pt'
     ) # ru selection only model
+
     # Reuse the val/test split saved by that same RU run for direct comparability.
     ru_split_path = Path(
         '../RU_selection/stored_models_ru_beam_sel/csi_conv3d_ru_beam_ep1_bs32_lr3e-04_cc16_cl3_fc256_do0.3_0505_1135/split_user_ids.json'
