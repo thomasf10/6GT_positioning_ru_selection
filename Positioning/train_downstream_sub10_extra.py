@@ -1,9 +1,12 @@
 """
-Variant of `train_downstream_sub10.py` that augments the on-grid training set
-with `n_extra_train_users` additional UEs drawn (deterministically, given the
-seed) from the `train_user_ids` list saved by the RU run.
+Sweep variant of `train_downstream_sub10.py`.
 
-Everything else is identical to the original sub-10 downstream script.
+Runs the same downstream sub-10 GHz positioning fine-tuning repeatedly across
+a grid of (n_extra_train_users, freeze_backbone) combinations. Smaller n_extra
+values are subsets of larger ones (deterministic given `extra_train_seed`).
+
+All runs of a sweep land in a single `sweep_{timestamp}/` directory, with a
+`sweep_summary.csv` aggregating the test metrics across the grid.
 """
 import json
 import sys
@@ -28,7 +31,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from dataset.dataloaders import CsiPositionDataset
 from train_standalone_sub10 import (
     PositioningCSIConv3D,
-    prepare_csi_input,
     train_epoch,
     validate,
     evaluate_position_cdf,
@@ -46,42 +48,37 @@ def main():
     subthz_path = f'../dataset/{dataset_folder}/sub_thz_channels'
     labels_path = f'../dataset/{dataset_folder}/ru_selection_labels/results.csv'
 
-    # Pretrained RU/beam-selection checkpoint to seed the backbone with.
     pretrained_ckpt_path = Path(
         '../RU_selection/stored_models'
         '\\csi_conv3d_ep20_bs32_lr3e-04_cc16_cl3_fc256_do0.3_fixed_beams_0408_1024/'
         'best_model.pt'
     )
-    # Reuse the val/test/train split written by an RU run for direct
-    # comparability with the standalone runs.
     ru_split_path = Path(
         '../RU_selection/stored_models_ru_beam_sel/'
         'csi_conv3d_ru_beam_ep1_bs32_lr3e-04_cc16_cl3_fc256_do0.3_0505_1135/'
         'split_user_ids.json'
     )
 
-    # --- Training config ---
+    # --- Training config (shared across the sweep) ---
     mode = 'sub10'
     batch_size = 8
     epochs = 150
     lr = 1e-3
-    freeze_backbone = True   # if True, train only the position head
-
-    # Extra training UEs drawn from `train_user_ids`, in addition to on-grid.
-    n_extra_train_users = 0
     extra_train_seed = 42
+
+    # --- Sweep ---
+    n_extra_sweep = [100, 500, 1000, None]   # None = all available
+    freeze_sweep = [True, False]
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    # --- Load pretrained config so the new model matches the saved weights ---
+    # --- Load pretrained config (arch must match the saved weights) ---
     if not pretrained_ckpt_path.exists():
         raise FileNotFoundError(
-            f"Pretrained checkpoint not found at {pretrained_ckpt_path}. "
-            f"Run RU_selection/train_csi_ru_beam_sel.py first."
+            f"Pretrained checkpoint not found at {pretrained_ckpt_path}."
         )
     pretrained_blob = torch.load(pretrained_ckpt_path, map_location='cpu')
     pretrained_config = pretrained_blob['config']
-
     conv_channels = pretrained_config['conv_channels']
     conv_layers = pretrained_config['conv_layers']
     proj_channels = pretrained_config['proj_channels']
@@ -93,38 +90,25 @@ def main():
     kernel_ue_ckpt = pretrained_config['kernel_ue']
     kernel_ru_ckpt = pretrained_config['kernel_ru']
 
-    timestamp = datetime.now().strftime('%m%d_%H%M')
-    run_name = (
-        f'csi_conv3d_pos_ft'
-        f'_ep{epochs}_bs{batch_size}_lr{lr:.0e}'
-        f'_cc{conv_channels}_cl{conv_layers}_fc{fc_size}_do{dropout}'
-        f'_frz{int(freeze_backbone)}'
-        f'_xtra{n_extra_train_users}'
-        f'_{timestamp}'
-    )
-    run_dir = Path('stored_models_positioning_sub10_downstream_extra') / run_name
-    run_dir.mkdir(parents=True, exist_ok=True)
+    sweep_timestamp = datetime.now().strftime('%m%d_%H%M')
+    sweep_dir = Path('stored_models_positioning_sub10_downstream_extra') / f'sweep_{sweep_timestamp}'
+    sweep_dir.mkdir(parents=True, exist_ok=True)
+    print(f'Using device:        {device}')
+    print(f'Sweep dir:           {sweep_dir}')
+    print(f'Pretrained ckpt:     {pretrained_ckpt_path}')
 
-    print(f'Using device: {device}')
-    print('Loading CSI positioning datasets...')
-
-    # --- Load saved RU split ---
+    # --- Load saved RU split once ---
     if not ru_split_path.exists():
-        raise FileNotFoundError(
-            f"RU split file not found at {ru_split_path}. The RU run that "
-            f"produced the pretrained checkpoint should also have written "
-            f"split_user_ids.json next to best_model.pt."
-        )
+        raise FileNotFoundError(f"RU split file not found at {ru_split_path}.")
     with open(ru_split_path) as f:
         ru_split = json.load(f)
     saved_train_ids = list(ru_split['train_user_ids'])
     saved_val_ids = list(ru_split['val_user_ids'])
     saved_test_ids = list(ru_split['test_user_ids'])
-    print(f'Loaded RU split from {ru_split_path}: '
-          f'train={len(saved_train_ids)}, val={len(saved_val_ids)}, '
-          f'test={len(saved_test_ids)}')
+    print(f'Loaded RU split: train={len(saved_train_ids)}, '
+          f'val={len(saved_val_ids)}, test={len(saved_test_ids)}')
 
-    # --- On-grid users (always part of training) ---
+    # --- Build the on-grid set once ---
     on_grid_dataset = CsiPositionDataset(
         subthz_path=subthz_path,
         sub10_path=sub10_path,
@@ -134,309 +118,300 @@ def main():
     )
     on_grid_ids = set(on_grid_dataset.valid_users)
 
-    # --- Pick N extras from saved train_user_ids, avoiding on-grid overlap ---
-    extra_candidates = sorted(set(saved_train_ids) - on_grid_ids)
-    n_pick = min(n_extra_train_users, len(extra_candidates))
-    if n_extra_train_users > n_pick:
-        print(
-            f'Warning: only {n_pick} extra training UEs available '
-            f'(requested {n_extra_train_users}).'
+    extra_candidates_all = sorted(set(saved_train_ids) - on_grid_ids)
+    max_extras = len(extra_candidates_all)
+    rng = np.random.default_rng(extra_train_seed)
+    shuffled_idx = rng.permutation(max_extras)
+    shuffled_candidates = [extra_candidates_all[i] for i in shuffled_idx]
+    print(f'On-grid UEs:        {len(on_grid_ids)}')
+    print(f'Extra candidates:   {max_extras} (in train_user_ids, not on-grid)')
+
+    # ----------------------------------------------------------------- #
+    def run_one(n_extra_requested, freeze_backbone):
+        if n_extra_requested is None:
+            n_extra_label = 'all'
+            n_pick = max_extras
+        else:
+            n_extra_label = str(n_extra_requested)
+            n_pick = min(n_extra_requested, max_extras)
+            if n_extra_requested > max_extras:
+                print(
+                    f'Warning: only {max_extras} extra UEs available, '
+                    f'requested {n_extra_requested}.'
+                )
+        extra_ids = sorted(shuffled_candidates[:n_pick])
+
+        combined_train_ids = sorted(on_grid_ids | set(extra_ids))
+        train_dataset = CsiPositionDataset(
+            subthz_path=subthz_path,
+            sub10_path=sub10_path,
+            labels_path=labels_path,
+            mode=mode,
+            user_ids=combined_train_ids,
         )
-    if n_pick > 0:
-        rng = np.random.default_rng(extra_train_seed)
-        picked = rng.choice(len(extra_candidates), size=n_pick, replace=False)
-        extra_ids = sorted(extra_candidates[i] for i in picked)
-    else:
-        extra_ids = []
-    print(f'Training set: {len(on_grid_ids)} on-grid + {len(extra_ids)} extras.')
-
-    combined_train_ids = sorted(on_grid_ids | set(extra_ids))
-    train_dataset = CsiPositionDataset(
-        subthz_path=subthz_path,
-        sub10_path=sub10_path,
-        labels_path=labels_path,
-        mode=mode,
-        user_ids=combined_train_ids,
-    )
-
-    held_out = set(train_dataset.valid_users)
-    val_dataset = CsiPositionDataset(
-        subthz_path=subthz_path,
-        sub10_path=sub10_path,
-        labels_path=labels_path,
-        mode=mode,
-        user_ids=saved_val_ids,
-        exclude_user_ids=held_out,
-        max_users=160,
-    )
-    test_dataset = CsiPositionDataset(
-        subthz_path=subthz_path,
-        sub10_path=sub10_path,
-        labels_path=labels_path,
-        mode=mode,
-        user_ids=saved_test_ids,
-        exclude_user_ids=held_out,
-    )
-
-    if len(train_dataset) < 1:
-        raise ValueError('Train set is empty.')
-    if len(val_dataset) < 1 or len(test_dataset) < 1:
-        raise ValueError('Val or test set is empty after applying RU split.')
-
-    train_ids = set(train_dataset.valid_users)
-    val_ids = set(val_dataset.valid_users)
-    test_ids = set(test_dataset.valid_users)
-    overlap_train_test = train_ids & test_ids
-    overlap_train_val = train_ids & val_ids
-    if overlap_train_test or overlap_train_val:
-        raise ValueError(
-            f'Split leakage detected: train∩test={len(overlap_train_test)}, '
-            f'train∩val={len(overlap_train_val)}'
+        held_out = set(train_dataset.valid_users)
+        val_dataset = CsiPositionDataset(
+            subthz_path=subthz_path,
+            sub10_path=sub10_path,
+            labels_path=labels_path,
+            mode=mode,
+            user_ids=saved_val_ids,
+            exclude_user_ids=held_out,
+            max_users=160,
+        )
+        test_dataset = CsiPositionDataset(
+            subthz_path=subthz_path,
+            sub10_path=sub10_path,
+            labels_path=labels_path,
+            mode=mode,
+            user_ids=saved_test_ids,
+            exclude_user_ids=held_out,
         )
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
+        if len(train_dataset) < 1:
+            raise ValueError('Train set is empty.')
+        if len(val_dataset) < 1 or len(test_dataset) < 1:
+            raise ValueError('Val or test set is empty after applying RU split.')
 
-    sample_data, _sample_label, _ = train_dataset[0]
-    csi_raw = sample_data['sub10_channel']  # (n_aps, ue, ru, sc, 2)
-    csi_prepared = prepare_csi_input(csi_raw.unsqueeze(0)).squeeze(0)
-    num_aps = csi_raw.shape[0]
-    num_ue_ants = csi_raw.shape[1]
-    num_ru_ants = csi_raw.shape[2]
+        train_ids = set(train_dataset.valid_users)
+        if train_ids & set(val_dataset.valid_users) or train_ids & set(test_dataset.valid_users):
+            raise ValueError('Split leakage detected between train and val/test.')
 
-    if (kernel_ue_ckpt, kernel_ru_ckpt) != (num_ue_ants, num_ru_ants):
-        raise RuntimeError(
-            f"Antenna mismatch between pretrained checkpoint and current data: "
-            f"ckpt kernel=(ue={kernel_ue_ckpt}, ru={kernel_ru_ckpt}) vs "
-            f"data=(ue={num_ue_ants}, ru={num_ru_ants})."
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
+
+        sample_data, _sample_label, _ = train_dataset[0]
+        csi_raw = sample_data['sub10_channel']
+        num_aps = csi_raw.shape[0]
+        num_ue_ants = csi_raw.shape[1]
+        num_ru_ants = csi_raw.shape[2]
+
+        if (kernel_ue_ckpt, kernel_ru_ckpt) != (num_ue_ants, num_ru_ants):
+            raise RuntimeError(
+                f"Antenna mismatch: ckpt kernel=(ue={kernel_ue_ckpt}, "
+                f"ru={kernel_ru_ckpt}) vs data=(ue={num_ue_ants}, ru={num_ru_ants})."
+            )
+
+        run_name = f'xtra{n_extra_label}_frz{int(freeze_backbone)}'
+        run_dir = sweep_dir / run_name
+        run_dir.mkdir(parents=True, exist_ok=True)
+
+        print(f'\n{"=" * 70}\n=== Run: {run_name} ===\n{"=" * 70}')
+        print(f'  freeze_backbone={freeze_backbone}, '
+              f'on_grid={len(on_grid_ids)} + extras={len(extra_ids)} '
+              f'=> train_size={len(train_dataset)} '
+              f'(val={len(val_dataset)}, test={len(test_dataset)})')
+
+        criterion = nn.MSELoss()
+        model = PositioningCSIConv3D(
+            num_aps=num_aps,
+            out_dim=2,
+            conv_channels=conv_channels,
+            conv_layers=conv_layers,
+            proj_channels=proj_channels,
+            pooled_ue=pooled_ue,
+            pooled_ru=pooled_ru,
+            pooled_feat=pooled_feat,
+            fc_size=fc_size,
+            dropout=dropout,
+            kernel_ue=num_ue_ants,
+            kernel_ru=num_ru_ants,
+        ).to(device)
+
+        load_pretrained_backbone(model, pretrained_ckpt_path, device)
+        if freeze_backbone:
+            freeze_backbone_params(model)
+
+        num_params_total = sum(p.numel() for p in model.parameters())
+        num_params_trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+        run_params = {
+            'run_name': run_name,
+            'sweep_dir': str(sweep_dir),
+            'pretrained': {
+                'ckpt_path': str(pretrained_ckpt_path),
+                'freeze_backbone': freeze_backbone,
+                'src_config': pretrained_config,
+            },
+            'dataset': {
+                'dataset_folder': dataset_folder,
+                'mode': mode,
+                'train_subset': 'on_grid+extras',
+                'n_on_grid': len(on_grid_ids),
+                'n_extra_requested': n_extra_requested,
+                'n_extra_picked': len(extra_ids),
+                'extra_train_seed': extra_train_seed,
+                'ru_split_path': str(ru_split_path),
+                'ru_split_seed': ru_split.get('seed'),
+                'train_size': len(train_dataset),
+                'val_size': len(val_dataset),
+                'test_size': len(test_dataset),
+            },
+            'training': {
+                'epochs': epochs,
+                'batch_size': batch_size,
+                'lr': lr,
+                'weight_decay': 1e-4,
+                'loss': 'MSE',
+                'scheduler': 'ReduceLROnPlateau',
+                'scheduler_factor': 0.5,
+                'scheduler_patience': 10,
+            },
+            'architecture': {
+                'num_aps': num_aps,
+                'out_dim': 2,
+                'conv_channels': conv_channels,
+                'conv_layers': conv_layers,
+                'kernel_size': [num_ue_ants, num_ru_ants, 3],
+                'proj_channels': proj_channels,
+                'pooled_ue': pooled_ue,
+                'pooled_ru': pooled_ru,
+                'pooled_feat': pooled_feat,
+                'fc_size': fc_size,
+                'dropout': dropout,
+                'total_parameters': num_params_total,
+                'trainable_parameters': num_params_trainable,
+            },
+            'device': str(device),
+        }
+        with open(run_dir / 'params.yaml', 'w') as f:
+            yaml.dump(run_params, f, default_flow_style=False, sort_keys=False)
+
+        optimizer = optim.AdamW(
+            [p for p in model.parameters() if p.requires_grad],
+            lr=lr,
+            weight_decay=1e-4,
+        )
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10)
+        writer = SummaryWriter(str(run_dir / 'logs'))
+        best_ckpt_path = str(run_dir / 'best_model.pt')
+
+        train_losses, val_losses, train_errs, val_errs = [], [], [], []
+        best_val_loss = float('inf')
+
+        for epoch in range(epochs):
+            t0 = time.perf_counter()
+            tr_loss, tr_err = train_epoch(model, train_loader, optimizer, device, criterion)
+            vl_loss, vl_err = validate(model, val_loader, device, criterion)
+            scheduler.step(vl_loss)
+
+            writer.add_scalar('Loss/train', tr_loss, epoch)
+            writer.add_scalar('Loss/val', vl_loss, epoch)
+            writer.add_scalar('PositionError_m/train', tr_err, epoch)
+            writer.add_scalar('PositionError_m/val', vl_err, epoch)
+
+            train_losses.append(tr_loss); val_losses.append(vl_loss)
+            train_errs.append(tr_err);    val_errs.append(vl_err)
+
+            dt = time.perf_counter() - t0
+            print(
+                f'Epoch [{epoch + 1:03d}/{epochs}]  '
+                f'loss={tr_loss:.4f}/{vl_loss:.4f}  '
+                f'pos_err={tr_err:.3f}/{vl_err:.3f} m  '
+                f'{dt:.1f}s'
+            )
+
+            if vl_loss < best_val_loss:
+                best_val_loss = vl_loss
+                torch.save({
+                    'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'val_loss': vl_loss,
+                    'val_pos_err_m': vl_err,
+                    'pretrained_ckpt': str(pretrained_ckpt_path),
+                    'freeze_backbone': freeze_backbone,
+                    'config': run_params,
+                }, best_ckpt_path)
+
+        writer.close()
+
+        ckpt = torch.load(best_ckpt_path, map_location=device)
+        model.load_state_dict(ckpt['model_state_dict'])
+        test_loss, test_err = validate(model, test_loader, device, criterion)
+        print(f'  Best val loss: {best_val_loss:.4f}  |  '
+              f'Test loss: {test_loss:.4f}  |  Test pos err: {test_err:.3f} m')
+
+        cdf_stats = evaluate_position_cdf(
+            model, test_loader, device, run_dir,
+            title=(f'Downstream sub-10 GHz (+{len(extra_ids)} extras, '
+                   f'frz={int(freeze_backbone)}): test positioning error CDF'),
         )
 
-    print('Dataset summary:')
-    print(f'  dataset_folder           = {dataset_folder}')
-    print(f'  train                    = on_grid ({len(on_grid_ids)}) + extras ({len(extra_ids)})')
-    print(f'  val/test                 = loaded from {ru_split_path} (training UEs removed)')
-    print(f'  sub10_channel raw shape  = {tuple(csi_raw.shape)}')
-    print(f'  sub10_channel conv input = {tuple(csi_prepared.shape)}')
-    print(f'  num_aps                  = {num_aps}')
-    print(f'  train/val/test sizes     = {len(train_dataset)} / {len(val_dataset)} / {len(test_dataset)}')
+        fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+        axes[0].plot(train_losses, label='Train Loss')
+        axes[0].plot(val_losses, label='Val Loss')
+        axes[0].set_xlabel('Epoch'); axes[0].set_ylabel('MSE Loss')
+        axes[0].set_title(f'Loss ({run_name})'); axes[0].grid(True); axes[0].legend()
+        axes[1].plot(train_errs, label='Train Pos Error')
+        axes[1].plot(val_errs, label='Val Pos Error')
+        axes[1].set_xlabel('Epoch'); axes[1].set_ylabel('Mean Euclidean Error (m)')
+        axes[1].set_title(f'Positioning Error ({run_name})'); axes[1].grid(True); axes[1].legend()
+        plt.tight_layout()
+        plt.savefig(run_dir / 'training_plots.png', dpi=150, bbox_inches='tight')
+        with open(run_dir / 'training_plots.tex', 'w', encoding='utf-8') as f:
+            f.write(matplot2tikz.get_tikz_code(float_format='.4g'))
+        plt.close(fig)
 
-    criterion = nn.MSELoss()
-
-    model = PositioningCSIConv3D(
-        num_aps=num_aps,
-        out_dim=2,
-        conv_channels=conv_channels,
-        conv_layers=conv_layers,
-        proj_channels=proj_channels,
-        pooled_ue=pooled_ue,
-        pooled_ru=pooled_ru,
-        pooled_feat=pooled_feat,
-        fc_size=fc_size,
-        dropout=dropout,
-        kernel_ue=num_ue_ants,
-        kernel_ru=num_ru_ants,
-    ).to(device)
-
-    load_pretrained_backbone(model, pretrained_ckpt_path, device)
-    if freeze_backbone:
-        freeze_backbone_params(model)
-
-    num_params_total = sum(p.numel() for p in model.parameters())
-    num_params_trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print('\nModel & training summary:')
-    print(f'  run_name                 = {run_name}')
-    print(f'  pretrained_ckpt          = {pretrained_ckpt_path}')
-    print(f'  freeze_backbone          = {freeze_backbone}')
-    print(f'  -- Training --')
-    print(f'  epochs                   = {epochs}')
-    print(f'  batch_size               = {batch_size}')
-    print(f'  lr                       = {lr}')
-    print(f'  n_extra_train_users      = {n_extra_train_users} (picked {len(extra_ids)})')
-    print(f'  loss                     = MSE on (x, y)')
-    print(f'  -- Architecture (from pretrained config) --')
-    print(f'  conv_channels            = {conv_channels}')
-    print(f'  conv_layers              = {conv_layers}')
-    print(f'  kernel_size              = ({num_ue_ants}, {num_ru_ants}, 3)')
-    print(f'  proj_channels            = {proj_channels}')
-    print(f'  pooled_ue                = {pooled_ue}')
-    print(f'  pooled_ru                = {pooled_ru}')
-    print(f'  pooled_feat              = {pooled_feat}')
-    print(f'  fc_size                  = {fc_size}')
-    print(f'  dropout                  = {dropout}')
-    print(f'  total parameters         = {num_params_total:,}')
-    print(f'  trainable parameters     = {num_params_trainable:,}')
-
-    run_params = {
-        'run_name': run_name,
-        'pretrained': {
-            'ckpt_path': str(pretrained_ckpt_path),
+        return {
+            'n_extra_requested': n_extra_requested,
+            'n_extra_label': n_extra_label,
+            'n_extra_picked': len(extra_ids),
             'freeze_backbone': freeze_backbone,
-            'src_config': pretrained_config,
-        },
-        'dataset': {
-            'dataset_folder': dataset_folder,
-            'mode': mode,
-            'train_subset': 'on_grid+extras',
-            'n_on_grid': len(on_grid_ids),
-            'n_extra_train_users': n_extra_train_users,
-            'n_extras_actually_picked': len(extra_ids),
-            'extra_train_seed': extra_train_seed,
-            'ru_split_path': str(ru_split_path),
-            'ru_split_seed': ru_split.get('seed'),
             'train_size': len(train_dataset),
             'val_size': len(val_dataset),
             'test_size': len(test_dataset),
-        },
-        'training': {
-            'epochs': epochs,
-            'batch_size': batch_size,
-            'lr': lr,
-            'weight_decay': 1e-4,
-            'loss': 'MSE',
-            'scheduler': 'ReduceLROnPlateau',
-            'scheduler_factor': 0.5,
-            'scheduler_patience': 10,
-        },
-        'architecture': {
-            'num_aps': num_aps,
-            'out_dim': 2,
-            'conv_channels': conv_channels,
-            'conv_layers': conv_layers,
-            'kernel_size': [num_ue_ants, num_ru_ants, 3],
-            'proj_channels': proj_channels,
-            'pooled_ue': pooled_ue,
-            'pooled_ru': pooled_ru,
-            'pooled_feat': pooled_feat,
-            'fc_size': fc_size,
-            'dropout': dropout,
-            'total_parameters': num_params_total,
-            'trainable_parameters': num_params_trainable,
-        },
-        'device': str(device),
-    }
-    params_path = run_dir / 'params.yaml'
-    with open(params_path, 'w') as f:
-        yaml.dump(run_params, f, default_flow_style=False, sort_keys=False)
-    print(f'\nRun parameters saved to {params_path}')
+            'best_val_loss': best_val_loss,
+            'test_loss': test_loss,
+            'test_pos_err_m': test_err,
+            'mean_m': cdf_stats['mean_m'],
+            'rmse_m': cdf_stats['rmse_m'],
+            'p50_m': cdf_stats['p50_m'],
+            'p90_m': cdf_stats['p90_m'],
+            'p95_m': cdf_stats['p95_m'],
+            'p99_m': cdf_stats['p99_m'],
+        }
 
-    optimizer = optim.AdamW(
-        [p for p in model.parameters() if p.requires_grad],
-        lr=lr,
-        weight_decay=1e-4,
-    )
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10)
+    sweep_results = []
+    for freeze_backbone in freeze_sweep:
+        for n_extra in n_extra_sweep:
+            result = run_one(n_extra, freeze_backbone)
+            sweep_results.append(result)
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
-    writer = SummaryWriter(str(run_dir / 'logs'))
-    best_ckpt_path = str(run_dir / 'best_model.pt')
-
-    train_losses, val_losses = [], []
-    train_errs, val_errs = [], []
-    best_val_loss = float('inf')
-
-    print('\nStarting fine-tuning...\n')
-    for epoch in range(epochs):
-        t0 = time.perf_counter()
-
-        tr_loss, tr_err = train_epoch(model, train_loader, optimizer, device, criterion)
-        vl_loss, vl_err = validate(model, val_loader, device, criterion)
-        scheduler.step(vl_loss)
-
-        writer.add_scalar('Loss/train', tr_loss, epoch)
-        writer.add_scalar('Loss/val', vl_loss, epoch)
-        writer.add_scalar('PositionError_m/train', tr_err, epoch)
-        writer.add_scalar('PositionError_m/val', vl_err, epoch)
-
-        train_losses.append(tr_loss); val_losses.append(vl_loss)
-        train_errs.append(tr_err);    val_errs.append(vl_err)
-
-        dt = time.perf_counter() - t0
-        print(
-            f'Epoch [{epoch + 1:03d}/{epochs}]  '
-            f'loss={tr_loss:.4f}/{vl_loss:.4f}  '
-            f'pos_err={tr_err:.3f}/{vl_err:.3f} m  '
-            f'{dt:.1f}s'
+    sweep_csv = sweep_dir / 'sweep_summary.csv'
+    with open(sweep_csv, 'w', encoding='utf-8') as f:
+        f.write(
+            'n_extra_requested,n_extra_picked,freeze_backbone,'
+            'train_size,val_size,test_size,'
+            'best_val_loss,test_loss,test_mean_m,test_rmse_m,'
+            'test_p50_m,test_p90_m,test_p95_m,test_p99_m\n'
         )
+        for r in sweep_results:
+            f.write(
+                f'{r["n_extra_label"]},{r["n_extra_picked"]},'
+                f'{int(r["freeze_backbone"])},'
+                f'{r["train_size"]},{r["val_size"]},{r["test_size"]},'
+                f'{r["best_val_loss"]:.6g},{r["test_loss"]:.6g},'
+                f'{r["mean_m"]:.6g},{r["rmse_m"]:.6g},'
+                f'{r["p50_m"]:.6g},{r["p90_m"]:.6g},'
+                f'{r["p95_m"]:.6g},{r["p99_m"]:.6g}\n'
+            )
 
-        if vl_loss < best_val_loss:
-            best_val_loss = vl_loss
-            torch.save({
-                'epoch': epoch,
-                'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict(),
-                'val_loss': vl_loss,
-                'val_pos_err_m': vl_err,
-                'pretrained_ckpt': str(pretrained_ckpt_path),
-                'freeze_backbone': freeze_backbone,
-                'config': {
-                    'mode': mode,
-                    'batch_size': batch_size,
-                    'epochs': epochs,
-                    'lr': lr,
-                    'n_extra_train_users': n_extra_train_users,
-                    'extra_train_seed': extra_train_seed,
-                    'conv_channels': conv_channels,
-                    'conv_layers': conv_layers,
-                    'proj_channels': proj_channels,
-                    'pooled_ue': pooled_ue,
-                    'pooled_ru': pooled_ru,
-                    'pooled_feat': pooled_feat,
-                    'fc_size': fc_size,
-                    'dropout': dropout,
-                    'kernel_ue': num_ue_ants,
-                    'kernel_ru': num_ru_ants,
-                },
-            }, best_ckpt_path)
-
-    writer.close()
-
-    # --- Test evaluation ---
-    ckpt = torch.load(best_ckpt_path, map_location=device)
-    model.load_state_dict(ckpt['model_state_dict'])
-    test_loss, test_err = validate(model, test_loader, device, criterion)
-
-    print('\nFine-tuning finished')
-    print(f'Best val loss:       {best_val_loss:.4f}')
-    print(f'Test loss:           {test_loss:.4f}')
-    print(f'Test pos error:      {test_err:.3f} m')
-    print(f'Best checkpoint:     {best_ckpt_path}')
-
-    # --- CDF of per-sample positioning error on the test set ---
-    evaluate_position_cdf(
-        model, test_loader, device, run_dir,
-        title=f'Downstream (fine-tuned) sub-10 GHz (+{len(extra_ids)} extras): '
-              'test positioning error CDF',
+    print(f'\n\n=== Sweep summary ({sweep_csv}) ===')
+    print(
+        f'{"n_extra":<8}{"frz":>5}{"train":>8}'
+        f'{"mean[m]":>10}{"rmse[m]":>10}{"p50":>8}{"p90":>8}{"p95":>8}'
     )
-
-    # --- Training plots ---
-    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-
-    axes[0].plot(train_losses, label='Train Loss')
-    axes[0].plot(val_losses, label='Val Loss')
-    axes[0].set_xlabel('Epoch')
-    axes[0].set_ylabel('MSE Loss')
-    axes[0].set_title('Loss Curves (fine-tuning)')
-    axes[0].grid(True)
-    axes[0].legend()
-
-    axes[1].plot(train_errs, label='Train Pos Error')
-    axes[1].plot(val_errs, label='Val Pos Error')
-    axes[1].set_xlabel('Epoch')
-    axes[1].set_ylabel('Mean Euclidean Error (m)')
-    axes[1].set_title('Positioning Error (fine-tuning)')
-    axes[1].grid(True)
-    axes[1].legend()
-
-    plt.tight_layout()
-    plot_path = str(run_dir / 'training_plots.png')
-    plt.savefig(plot_path, dpi=150, bbox_inches='tight')
-    tikz_code = matplot2tikz.get_tikz_code(float_format='.4g')
-    tikz_path = str(run_dir / 'training_plots.tex')
-    with open(tikz_path, 'w', encoding='utf-8') as f:
-        f.write(tikz_code)
-    plt.close(fig)
-    print(f'Training curves saved to: {plot_path}')
-    print(f'TikZ saved to: {tikz_path}')
+    for r in sweep_results:
+        print(
+            f'{r["n_extra_label"]:<8}{int(r["freeze_backbone"]):>5}'
+            f'{r["train_size"]:>8}'
+            f'{r["mean_m"]:>10.3f}{r["rmse_m"]:>10.3f}'
+            f'{r["p50_m"]:>8.3f}{r["p90_m"]:>8.3f}{r["p95_m"]:>8.3f}'
+        )
 
 
 if __name__ == '__main__':
