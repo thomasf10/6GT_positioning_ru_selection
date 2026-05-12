@@ -190,14 +190,24 @@ def evaluate_position_cdf(model, test_loader, device, save_dir,
                           title='Test positioning error CDF',
                           csi_key='sub10_channel'):
     """Run inference on the test set, compute the per-sample Euclidean error
-    (in metres), and save the empirical CDF (PNG, TikZ, raw CSV).
+    (in metres), and save:
+
+      - `test_pos_error_cdf.csv`   : sorted errors + CDF values (plot-ready)
+      - `test_predictions.csv`     : per-sample raw data
+                                     (user_id, true_x, true_y, pred_x, pred_y, error_m)
+      - `test_pos_error_summary.csv` : one-line summary (n, mean, rmse, p50/90/95/99)
+      - `test_pos_error_cdf.png`   : empirical CDF plot
+      - `test_pos_error_cdf.tex`   : TikZ export of the CDF plot
 
     Returns a dict with the raw errors and key percentiles.
     """
     model.eval()
-    errors = []
+    all_errors = []
+    all_true = []
+    all_pred = []
+    all_user_ids = []
     with torch.no_grad():
-        for data, position, _user_ids in tqdm(test_loader, desc='CDF eval', leave=False):
+        for data, position, user_ids in tqdm(test_loader, desc='CDF eval', leave=False):
             csi = data[csi_key].to(device)
             csi = prepare_csi_input(csi)
             csi = normalize_csi(csi)
@@ -205,11 +215,19 @@ def evaluate_position_cdf(model, test_loader, device, save_dir,
 
             pred = model(csi)
             err = torch.linalg.norm(pred - position, dim=1).cpu().numpy()
-            errors.append(err)
+            all_errors.append(err)
+            all_true.append(position.cpu().numpy())
+            all_pred.append(pred.cpu().numpy())
+            if isinstance(user_ids, torch.Tensor):
+                all_user_ids.extend(user_ids.cpu().tolist())
+            else:
+                all_user_ids.extend(list(user_ids))
 
-    errors = np.concatenate(errors) if errors else np.zeros((0,), dtype=np.float32)
-    if errors.size == 0:
+    if not all_errors:
         raise ValueError('Test loader produced no samples; cannot build CDF.')
+    errors = np.concatenate(all_errors)
+    true_pos = np.concatenate(all_true, axis=0)
+    pred_pos = np.concatenate(all_pred, axis=0)
 
     errors_sorted = np.sort(errors)
     cdf = np.arange(1, len(errors_sorted) + 1) / len(errors_sorted)
@@ -224,15 +242,39 @@ def evaluate_position_cdf(model, test_loader, device, save_dir,
     )
 
     save_dir = Path(save_dir)
-    csv_path = save_dir / 'test_pos_error_cdf.csv'
+
+    # --- CSV 1: sorted errors + empirical CDF (replots the figure directly) ---
+    cdf_csv_path = save_dir / 'test_pos_error_cdf.csv'
     np.savetxt(
-        csv_path,
+        cdf_csv_path,
         np.column_stack([errors_sorted, cdf]),
         delimiter=',',
         header='error_m,cdf',
         comments='',
     )
 
+    # --- CSV 2: per-sample raw predictions (richer source for any later analysis) ---
+    pred_csv_path = save_dir / 'test_predictions.csv'
+    if true_pos.shape[1] != 2 or pred_pos.shape[1] != 2:
+        raise ValueError(
+            f'evaluate_position_cdf expects 2D positions; got true={true_pos.shape}, '
+            f'pred={pred_pos.shape}.'
+        )
+    with open(pred_csv_path, 'w', encoding='utf-8') as f:
+        f.write('user_id,true_x,true_y,pred_x,pred_y,error_m\n')
+        for uid, (tx, ty), (px, py), err in zip(all_user_ids, true_pos, pred_pos, errors):
+            f.write(f'{int(uid)},{tx:.6g},{ty:.6g},{px:.6g},{py:.6g},{err:.6g}\n')
+
+    # --- CSV 3: one-line summary, easy to aggregate across runs ---
+    summary_csv_path = save_dir / 'test_pos_error_summary.csv'
+    with open(summary_csv_path, 'w', encoding='utf-8') as f:
+        f.write('n,mean_m,rmse_m,p50_m,p90_m,p95_m,p99_m\n')
+        f.write(
+            f'{len(errors)},{mean:.6g},{rmse:.6g},'
+            f'{float(p50):.6g},{float(p90):.6g},{float(p95):.6g},{float(p99):.6g}\n'
+        )
+
+    # --- Plot ---
     fig, ax = plt.subplots(figsize=(7, 5))
     ax.plot(errors_sorted, cdf,
             label=f'mean={mean:.2f} m, p90={p90:.2f} m, p95={p95:.2f} m')
@@ -253,12 +295,17 @@ def evaluate_position_cdf(model, test_loader, device, save_dir,
     with open(tikz_path, 'w', encoding='utf-8') as f:
         f.write(tikz_code)
     plt.close(fig)
-    print(f'Test CDF saved to: {plot_path}')
-    print(f'TikZ saved to:     {tikz_path}')
-    print(f'Raw CSV saved to:  {csv_path}')
+    print(f'Test CDF saved to:      {plot_path}')
+    print(f'TikZ saved to:          {tikz_path}')
+    print(f'CDF CSV saved to:       {cdf_csv_path}')
+    print(f'Per-sample CSV saved to: {pred_csv_path}')
+    print(f'Summary CSV saved to:   {summary_csv_path}')
 
     return {
         'errors_m': errors,
+        'true_pos': true_pos,
+        'pred_pos': pred_pos,
+        'user_ids': all_user_ids,
         'mean_m': mean,
         'rmse_m': rmse,
         'p50_m': float(p50),
